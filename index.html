@@ -3,48 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Intelligence Embarquée</title>
+    <title>Nicla Full Dashboard</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --dark: #343a40; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #status { font-weight: bold; margin-bottom: 20px; padding: 10px 20px; border-radius: 20px; background: #e0e0e0; }
-        .status-connected { background: #d4edda !important; color: #155724; }
-        button { padding: 15px 40px; font-size: 1.1rem; background: var(--success); color: white; border: none; border-radius: 50px; cursor: pointer; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; max-width: 1000px; margin-top: 30px; }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
-        .battery-container { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin-top: 10px; overflow: hidden; }
-        #battery-bar { width: 0%; height: 100%; background: var(--success); transition: 0.5s; }
-        #motion-badge { display: inline-block; padding: 10px 30px; border-radius: 50px; font-weight: bold; color: white; background: #666; transition: 0.3s; font-size: 1.2rem; }
-        .moving { background: var(--primary) !important; transform: scale(1.05); }
+        :root { --p: #007bff; --s: #28a745; --w: #ffc107; --d: #343a40; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; max-width: 900px; margin-top: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        #motion-badge { display: inline-block; padding: 10px 30px; border-radius: 50px; font-weight: bold; color: white; background: #666; margin-top: 10px; }
+        .moving { background: var(--p) !important; }
+        .battery-bar { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+        #bar-fill { width: 0%; height: 100%; background: var(--s); transition: 0.5s; }
+        button { padding: 15px 30px; border-radius: 50px; border: none; background: var(--s); color: white; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>Nicla Embedded AI</h1>
-    <div id="status">Déconnecté 🔴</div>
-    <button id="connectBtn">CONNEXION BLUETOOTH</button>
+    <h1>Nicla Tracker Full</h1>
+    <button id="conn">SE CONNECTER</button>
 
     <div class="grid">
-        <div class="card" style="grid-column: span 2;">
-            <h2>Détection Modèle C++</h2>
-            <div id="motion-badge">ATTENTE DONNÉES...</div>
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>État du Système (Modèle C++)</h2>
+            <div id="motion-badge">À L'ARRÊT</div>
         </div>
+
         <div class="card">
             <h2>Batterie</h2>
-            <p id="batt-txt">--%</p>
-            <div class="battery-container"><div id="battery-bar"></div></div>
+            <p id="batt">--%</p>
+            <div class="battery-bar"><div id="bar-fill"></div></div>
         </div>
+
         <div class="card">
+            <h2>Accélération (aTot)</h2>
+            <p id="atot">0.00 <small>m/s²</small></p>
+        </div>
+
+        <div class="card">
+            <h2>Vitesse</h2>
+            <p id="vit">0.0 <small>m/s</small></p>
+        </div>
+
+        <div class="card" style="border-bottom: 5px solid var(--p);">
             <h2>Pas (Session)</h2>
             <p id="pasS">0</p>
         </div>
-        <div class="card">
-            <h2>Pas (Total)</h2>
+
+        <div class="card" style="border-bottom: 5px solid var(--d);">
+            <h2>Pas (Total Cumulé)</h2>
             <p id="pasT">0</p>
-        </div>
-        <div class="card">
-            <h2>Vitesse</h2>
-            <p id="vit">0.0</p>
         </div>
     </div>
 
@@ -55,54 +61,41 @@
             pasT: "19b10000-1002-537e-4f6c-d104768a1214",
             vit:  "19b10000-1003-537e-4f6c-d104768a1214",
             batt: "19b10000-1004-537e-4f6c-d104768a1214",
-            etat: "19b10000-1006-537e-4f6c-d104768a1214" // UUID de l'état C++
+            atot: "19b10000-1005-537e-4f6c-d104768a1214",
+            etat: "19b10000-1006-537e-4f6c-d104768a1214"
         };
 
-        const connectBtn = document.getElementById('connectBtn');
+        document.getElementById('conn').addEventListener('click', async () => {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ namePrefix: 'Nicla' }], optionalServices: [SERVICE_UUID]
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService(SERVICE_UUID);
 
-        connectBtn.addEventListener('click', async () => {
-            try {
-                const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ namePrefix: 'Nicla' }],
-                    optionalServices: [SERVICE_UUID]
-                });
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService(SERVICE_UUID);
-                document.getElementById('status').innerText = "Connecté ✅";
-                document.getElementById('status').className = "status-connected";
-
-                // Écoute de l'ÉTAT calculé par le C++
-                const charEtat = await service.getCharacteristic(UUIDS.etat);
-                await charEtat.startNotifications();
-                charEtat.addEventListener('characteristicvaluechanged', (e) => {
-                    const val = e.target.value.getUint32(0, true);
-                    const badge = document.getElementById('motion-badge');
-                    if(val === 1) {
-                        badge.innerText = "EN MOUVEMENT";
-                        badge.className = "moving";
+            const listen = async (uuid, id, isFloat = false) => {
+                const c = await service.getCharacteristic(uuid);
+                await c.startNotifications();
+                c.addEventListener('characteristicvaluechanged', (e) => {
+                    let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
+                    if(id === 'etat') {
+                        const b = document.getElementById('motion-badge');
+                        b.innerText = v == 1 ? "EN MOUVEMENT" : "À L'ARRÊT";
+                        b.className = v == 1 ? "moving" : "";
+                    } else if(id === 'batt') {
+                        document.getElementById('batt').innerText = v + "%";
+                        document.getElementById('bar-fill').style.width = v + "%";
                     } else {
-                        badge.innerText = "À L'ARRÊT";
-                        badge.className = "";
+                        document.getElementById(id).innerText = v;
                     }
                 });
+            };
 
-                // (Reste des abonnements simplifié pour l'exemple)
-                const bind = async (uuid, id, isFloat=false) => {
-                    const c = await service.getCharacteristic(uuid);
-                    await c.startNotifications();
-                    c.addEventListener('characteristicvaluechanged', (e) => {
-                        const v = isFloat ? e.target.value.getFloat32(0, true).toFixed(1) : e.target.value.getUint32(0, true);
-                        document.getElementById(id).innerText = v + (id === 'batt-txt' ? '%' : '');
-                        if(id === 'batt-txt') document.getElementById('battery-bar').style.width = v + '%';
-                    });
-                };
-
-                await bind(UUIDS.pasS, 'pasS');
-                await bind(UUIDS.pasT, 'pasT');
-                await bind(UUIDS.vit, 'vit', true);
-                await bind(UUIDS.batt, 'batt-txt');
-
-            } catch (e) { console.error(e); }
+            listen(UUIDS.pasS, 'pasS');
+            listen(UUIDS.pasT, 'pasT');
+            listen(UUIDS.vit, 'vit', true);
+            listen(UUIDS.batt, 'batt');
+            listen(UUIDS.atot, 'atot', true);
+            listen(UUIDS.etat, 'etat');
         });
     </script>
 </body>
