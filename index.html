@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Full Dashboard</title>
+    <title>Nicla Tracker Full - Fix Batterie</title>
     <style>
         :root { --p: #007bff; --s: #28a745; --w: #ffc107; --d: #343a40; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -34,7 +34,7 @@
         </div>
 
         <div class="card">
-            <h2>Accélération [m/s^2]</h2>
+            <h2>Accélération [m/s²]</h2>
             <p id="atot">0.00 <small>m/s²</small></p>
         </div>
 
@@ -66,36 +66,63 @@
         };
 
         document.getElementById('conn').addEventListener('click', async () => {
-            const device = await navigator.bluetooth.requestDevice({
-                filters: [{ namePrefix: 'Nicla' }], optionalServices: [SERVICE_UUID]
-            });
-            const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(SERVICE_UUID);
-
-            const listen = async (uuid, id, isFloat = false) => {
-                const c = await service.getCharacteristic(uuid);
-                await c.startNotifications();
-                c.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
-                    if(id === 'etat') {
-                        const b = document.getElementById('motion-badge');
-                        b.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
-                        b.className = v == 1 ? "moving" : "";
-                    } else if(id === 'batt') {
-                        document.getElementById('batt').innerText = v + "%";
-                        document.getElementById('bar-fill').style.width = v + "%";
-                    } else {
-                        document.getElementById(id).innerText = v;
-                    }
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'Nicla' }], optionalServices: [SERVICE_UUID]
                 });
-            };
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                document.getElementById('conn').innerText = "CONNECTÉ";
+                document.getElementById('conn').style.background = "#666";
 
-            listen(UUIDS.pasS, 'pasS');
-            listen(UUIDS.pasT, 'pasT');
-            listen(UUIDS.vit, 'vit', true);
-            listen(UUIDS.batt, 'batt');
-            listen(UUIDS.atot, 'atot', true);
-            listen(UUIDS.etat, 'etat');
+                const listen = async (uuid, id, isFloat = false, isBatt = false) => {
+                    const c = await service.getCharacteristic(uuid);
+                    await c.startNotifications();
+                    c.addEventListener('characteristicvaluechanged', (e) => {
+                        
+                        // Détermine si on lit un Float (4 bytes) ou un Int
+                        let v = (isFloat || isBatt) ? e.target.value.getFloat32(0, true) : e.target.value.getUint32(0, true);
+                        
+                        if(id === 'etat') {
+                            const b = document.getElementById('motion-badge');
+                            b.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
+                            b.className = v == 1 ? "moving" : "";
+                        } 
+                        else if(isBatt) {
+                            // Conversion Voltage (ex: 3.8) -> Pourcentage
+                            // Seuil bas: 3.4V, Seuil haut: 4.2V
+                            let pct = Math.round((v - 3.4) * 100 / (4.2 - 3.4));
+                            if (pct > 100) pct = 100;
+                            if (pct < 0) pct = 0;
+
+                            document.getElementById('batt').innerText = pct + "% (" + v.toFixed(2) + "V)";
+                            document.getElementById('bar-fill').style.width = pct + "%";
+                            
+                            // Couleur dynamique
+                            const fill = document.getElementById('bar-fill');
+                            if(pct > 50) fill.style.background = "#28a745";
+                            else if(pct > 20) fill.style.background = "#ffc107";
+                            else fill.style.background = "#dc3545";
+                        } 
+                        else {
+                            // Pour les autres valeurs
+                            document.getElementById(id).innerText = isFloat ? v.toFixed(2) : v;
+                        }
+                    });
+                };
+
+                // Lancement des écoutes
+                listen(UUIDS.pasS, 'pasS');
+                listen(UUIDS.pasT, 'pasT');
+                listen(UUIDS.vit, 'vit', true);
+                listen(UUIDS.atot, 'atot', true);
+                listen(UUIDS.etat, 'etat');
+                listen(UUIDS.batt, 'batt', false, true); // Flag isBatt activé
+
+            } catch (err) {
+                console.error("Erreur de connexion : ", err);
+                alert("Erreur de connexion Bluetooth");
+            }
         });
     </script>
 </body>
