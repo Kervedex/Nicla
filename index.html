@@ -3,85 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Tracker Dashboard</title>
+    <title>Nicla Tracker Pro</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; width: 100%; max-width: 800px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        .card h2 { margin: 0; font-size: 1rem; color: #666; }
-        .card p { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #007bff; }
-        button { padding: 15px 30px; font-size: 1.2rem; background: #28a745; color: white; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 30px; }
-        button:disabled { background: #ccc; }
-        #status { margin-bottom: 10px; font-weight: bold; }
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --dark: #343a40;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f9; color: var(--dark); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        h1 { margin-bottom: 10px; color: var(--dark); }
+        #status { font-weight: bold; margin-bottom: 20px; padding: 10px 20px; border-radius: 20px; background: #e0e0e0; transition: 0.3s; }
+        .status-connected { background: #d4edda !important; color: #155724; }
+        
+        button { padding: 15px 40px; font-size: 1.1rem; font-weight: bold; background: var(--success); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 900px; margin-top: 30px; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; border-bottom: 5px solid transparent; }
+        .card h2 { margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+        .card p { font-size: 3rem; font-weight: 800; margin: 15px 0; color: var(--dark); }
+        .card span { font-size: 1.2rem; font-weight: normal; color: #aaa; }
+
+        /* Couleurs thématiques par carte */
+        .card-session { border-color: var(--primary); }
+        .card-total { border-color: var(--dark); }
+        .card-vitesse { border-color: #17a2b8; }
+        .card-accel { border-color: #6610f2; }
+        .card-battery { border-color: var(--warning); }
+
+        #batterie-level { color: var(--warning); }
     </style>
 </head>
 <body>
 
-    <h1>Nicla Tracker</h1>
-    <div id="status">Statut : Déconnecté</div>
-    <button id="connectBtn">Se connecter à la Nicla</button>
+    <h1>Nicla Tracker Pro</h1>
+    <div id="status">Statut : Déconnecté 🔴</div>
+    <button id="connectBtn">SCANNER & CONNECTER</button>
 
     <div class="grid">
-        <div class="card">
+        <div class="card card-battery">
+            <h2>Batterie</h2>
+            <p id="batterie">--<span> %</span></p>
+        </div>
+
+        <div class="card card-accel">
+            <h2>Accélération (Atot)</h2>
+            <p id="accel">0.00<span> m/s²</span></p>
+        </div>
+
+        <div class="card card-session">
             <h2>Pas (Session)</h2>
             <p id="pasSession">0</p>
         </div>
-        <div class="card">
-            <h2>Pas (Total)</h2>
+
+        <div class="card card-total">
+            <h2>Pas (Cumul Total)</h2>
             <p id="pasTotal">0</p>
         </div>
-        <div class="card">
-            <h2>Vitesse</h2>
-            <p id="vitesse">0.0 <span style="font-size: 1rem;">m/s</span></p>
+
+        <div class="card card-vitesse">
+            <h2>Vitesse Est.</h2>
+            <p id="vitesse">0.0<span> m/s</span></p>
         </div>
     </div>
 
     <script>
+        // UUIDs correspondants au code Arduino
         const SERVICE_UUID = "19b10000-0000-537e-4f6c-d104768a1214";
-        const CHAR_PAS_SESSION = "19b10000-1001-537e-4f6c-d104768a1214";
-        const CHAR_PAS_TOTAL = "19b10000-1002-537e-4f6c-d104768a1214";
-        const CHAR_VITESSE = "19b10000-1003-537e-4f6c-d104768a1214";
+        const CHAR_UUIDS = {
+            pasSession: "19b10000-1001-537e-4f6c-d104768a1214",
+            pasTotal:   "19b10000-1002-537e-4f6c-d104768a1214",
+            vitesse:    "19b10000-1003-537e-4f6c-d104768a1214",
+            battery:    "19b10000-1004-537e-4f6c-d104768a1214",
+            accel:      "19b10000-1005-537e-4f6c-d104768a1214"
+        };
 
         const connectBtn = document.getElementById('connectBtn');
         const statusTxt = document.getElementById('status');
 
         connectBtn.addEventListener('click', async () => {
             try {
-                statusTxt.innerText = "Recherche...";
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ namePrefix: 'Nicla' }],
                     optionalServices: [SERVICE_UUID]
                 });
 
+                statusTxt.innerText = "Connexion en cours... ⏳";
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
-                statusTxt.innerText = "Connecté !";
+                
+                statusTxt.innerText = "Connecté ✅";
+                statusTxt.classList.add('status-connected');
                 connectBtn.disabled = true;
 
-                // Abonnement Pas Session
-                const charSession = await service.getCharacteristic(CHAR_PAS_SESSION);
-                await charSession.startNotifications();
-                charSession.addEventListener('characteristicvaluechanged', (e) => {
-                    document.getElementById('pasSession').innerText = e.target.value.getUint32(0, true);
-                });
+                // Fonction d'abonnement générique
+                const subscribe = async (uuid, elementId, isFloat = false) => {
+                    const char = await service.getCharacteristic(uuid);
+                    await char.startNotifications();
+                    char.addEventListener('characteristicvaluechanged', (e) => {
+                        let value;
+                        if (isFloat) {
+                            value = e.target.value.getFloat32(0, true).toFixed(2);
+                        } else {
+                            value = e.target.value.getUint32(0, true);
+                        }
+                        document.getElementById(elementId).childNodes[0].nodeValue = value;
+                    });
+                };
 
-                // Abonnement Pas Total
-                const charTotal = await service.getCharacteristic(CHAR_PAS_TOTAL);
-                await charTotal.startNotifications();
-                charTotal.addEventListener('characteristicvaluechanged', (e) => {
-                    document.getElementById('pasTotal').innerText = e.target.value.getUint32(0, true);
-                });
+                // Lancement des abonnements
+                await subscribe(CHAR_UUIDS.pasSession, 'pasSession');
+                await subscribe(CHAR_UUIDS.pasTotal, 'pasTotal');
+                await subscribe(CHAR_UUIDS.vitesse, 'vitesse', true);
+                await subscribe(CHAR_UUIDS.battery, 'batterie');
+                await subscribe(CHAR_UUIDS.accel, 'accel', true);
 
-                // Abonnement Vitesse
-                const charVitesse = await service.getCharacteristic(CHAR_VITESSE);
-                await charVitesse.startNotifications();
-                charVitesse.addEventListener('characteristicvaluechanged', (e) => {
-                    document.getElementById('vitesse').innerText = e.target.value.getFloat32(0, true).toFixed(2);
+                device.addEventListener('gattserverdisconnected', () => {
+                    statusTxt.innerText = "Déconnecté 🔴";
+                    statusTxt.classList.remove('status-connected');
+                    connectBtn.disabled = false;
                 });
 
             } catch (error) {
                 console.error(error);
-                statusTxt.innerText = "Erreur : " + error;
+                statusTxt.innerText = "Erreur de connexion ❌";
             }
         });
     </script>
