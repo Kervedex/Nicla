@@ -3,81 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Tracker Ultra</title>
+    <title>Nicla Intelligence Embarquée</title>
     <style>
-        :root {
-            --primary: #007bff; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --dark: #343a40;
-        }
+        :root { --primary: #007bff; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --dark: #343a40; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        
-        /* Bouton et Statut */
         #status { font-weight: bold; margin-bottom: 20px; padding: 10px 20px; border-radius: 20px; background: #e0e0e0; }
         .status-connected { background: #d4edda !important; color: #155724; }
-        button { padding: 15px 40px; font-size: 1.1rem; background: var(--success); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-
-        /* Grille des cartes */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 900px; margin-top: 30px; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
-        .card h2 { margin: 0; font-size: 0.85rem; text-transform: uppercase; color: #888; }
-        .card p { font-size: 2.5rem; font-weight: 800; margin: 10px 0; }
-
-        /* Barre de batterie */
-        .battery-container { width: 100%; height: 20px; background: #eee; border-radius: 10px; margin-top: 15px; overflow: hidden; border: 1px solid #ddd; }
-        #battery-bar { width: 0%; height: 100%; background: var(--success); transition: width 0.5s, background 0.5s; }
-
-        /* Badge d'état */
-        #motion-badge { display: inline-block; padding: 10px 25px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; color: white; background: #666; margin-top: 10px; transition: 0.3s; }
-        .moving { background: var(--primary) !important; box-shadow: 0 0 15px rgba(0,123,255,0.4); }
-        .stopped { background: #6c757d !important; }
+        button { padding: 15px 40px; font-size: 1.1rem; background: var(--success); color: white; border: none; border-radius: 50px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; max-width: 1000px; margin-top: 30px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
+        .battery-container { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+        #battery-bar { width: 0%; height: 100%; background: var(--success); transition: 0.5s; }
+        #motion-badge { display: inline-block; padding: 10px 30px; border-radius: 50px; font-weight: bold; color: white; background: #666; transition: 0.3s; font-size: 1.2rem; }
+        .moving { background: var(--primary) !important; transform: scale(1.05); }
     </style>
 </head>
 <body>
 
-    <h1>Nicla Tracker Ultra</h1>
-    <div id="status">Statut : Déconnecté 🔴</div>
-    <button id="connectBtn">SCANNER & CONNECTER</button>
+    <h1>Nicla Embedded AI</h1>
+    <div id="status">Déconnecté 🔴</div>
+    <button id="connectBtn">CONNEXION BLUETOOTH</button>
 
     <div class="grid">
-        <div class="card">
-            <h2>Niveau Batterie</h2>
-            <p id="battery-text">0%</p>
-            <div class="battery-container">
-                <div id="battery-bar"></div>
-            </div>
+        <div class="card" style="grid-column: span 2;">
+            <h2>Détection Modèle C++</h2>
+            <div id="motion-badge">ATTENTE DONNÉES...</div>
         </div>
-
         <div class="card">
-            <h2>Activité</h2>
-            <div id="motion-badge">À L'ARRÊT</div>
+            <h2>Batterie</h2>
+            <p id="batt-txt">--%</p>
+            <div class="battery-container"><div id="battery-bar"></div></div>
         </div>
-
         <div class="card">
-            <h2>Accélération</h2>
-            <p id="accel">0.00 <span style="font-size: 1rem;">m/s²</span></p>
-        </div>
-
-        <div class="card" style="border-top: 5px solid var(--primary);">
             <h2>Pas (Session)</h2>
-            <p id="pasSession">0</p>
+            <p id="pasS">0</p>
         </div>
-
-        <div class="card" style="border-top: 5px solid #17a2b8;">
+        <div class="card">
+            <h2>Pas (Total)</h2>
+            <p id="pasT">0</p>
+        </div>
+        <div class="card">
             <h2>Vitesse</h2>
-            <p id="vitesse">0.0 <span style="font-size: 1rem;">m/s</span></p>
+            <p id="vit">0.0</p>
         </div>
     </div>
 
     <script>
         const SERVICE_UUID = "19b10000-0000-537e-4f6c-d104768a1214";
-        const CHAR_UUIDS = {
-            pasSession: "19b10000-1001-537e-4f6c-d104768a1214",
-            vitesse:    "19b10000-1003-537e-4f6c-d104768a1214",
-            battery:    "19b10000-1004-537e-4f6c-d104768a1214",
-            accel:      "19b10000-1005-537e-4f6c-d104768a1214"
+        const UUIDS = {
+            pasS: "19b10000-1001-537e-4f6c-d104768a1214",
+            pasT: "19b10000-1002-537e-4f6c-d104768a1214",
+            vit:  "19b10000-1003-537e-4f6c-d104768a1214",
+            batt: "19b10000-1004-537e-4f6c-d104768a1214",
+            etat: "19b10000-1006-537e-4f6c-d104768a1214" // UUID de l'état C++
         };
 
         const connectBtn = document.getElementById('connectBtn');
-        const statusTxt = document.getElementById('status');
 
         connectBtn.addEventListener('click', async () => {
             try {
@@ -85,64 +66,43 @@
                     filters: [{ namePrefix: 'Nicla' }],
                     optionalServices: [SERVICE_UUID]
                 });
-
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
-                statusTxt.innerText = "Connecté ✅";
-                statusTxt.classList.add('status-connected');
-                connectBtn.disabled = true;
+                document.getElementById('status').innerText = "Connecté ✅";
+                document.getElementById('status').className = "status-connected";
 
-                // Abonnement Pas
-                const charPas = await service.getCharacteristic(CHAR_UUIDS.pasSession);
-                await charPas.startNotifications();
-                charPas.addEventListener('characteristicvaluechanged', (e) => {
-                    document.getElementById('pasSession').innerText = e.target.value.getUint32(0, true);
-                });
-
-                // Abonnement Vitesse & État
-                const charVit = await service.getCharacteristic(CHAR_UUIDS.vitesse);
-                const badge = document.getElementById('motion-badge');
-                await charVit.startNotifications();
-                charVit.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = e.target.value.getFloat32(0, true);
-                    document.getElementById('vitesse').childNodes[0].nodeValue = v.toFixed(2);
-                    
-                    // Logique d'état : si vitesse > 0.1, on est en mouvement
-                    if(v > 0.1) {
-                        badge.innerText = "MOUVEMENT";
+                // Écoute de l'ÉTAT calculé par le C++
+                const charEtat = await service.getCharacteristic(UUIDS.etat);
+                await charEtat.startNotifications();
+                charEtat.addEventListener('characteristicvaluechanged', (e) => {
+                    const val = e.target.value.getUint32(0, true);
+                    const badge = document.getElementById('motion-badge');
+                    if(val === 1) {
+                        badge.innerText = "EN MOUVEMENT";
                         badge.className = "moving";
                     } else {
                         badge.innerText = "À L'ARRÊT";
-                        badge.className = "stopped";
+                        badge.className = "";
                     }
                 });
 
-                // Abonnement Accélération
-                const charAcc = await service.getCharacteristic(CHAR_UUIDS.accel);
-                await charAcc.startNotifications();
-                charAcc.addEventListener('characteristicvaluechanged', (e) => {
-                    document.getElementById('accel').childNodes[0].nodeValue = e.target.value.getFloat32(0, true).toFixed(2);
-                });
+                // (Reste des abonnements simplifié pour l'exemple)
+                const bind = async (uuid, id, isFloat=false) => {
+                    const c = await service.getCharacteristic(uuid);
+                    await c.startNotifications();
+                    c.addEventListener('characteristicvaluechanged', (e) => {
+                        const v = isFloat ? e.target.value.getFloat32(0, true).toFixed(1) : e.target.value.getUint32(0, true);
+                        document.getElementById(id).innerText = v + (id === 'batt-txt' ? '%' : '');
+                        if(id === 'batt-txt') document.getElementById('battery-bar').style.width = v + '%';
+                    });
+                };
 
-                // Abonnement Batterie
-                const charBatt = await service.getCharacteristic(CHAR_UUIDS.battery);
-                await charBatt.startNotifications();
-                charBatt.addEventListener('characteristicvaluechanged', (e) => {
-                    let level = e.target.value.getUint32(0, true);
-                    document.getElementById('battery-text').innerText = level + "%";
-                    const bar = document.getElementById('battery-bar');
-                    bar.style.width = level + "%";
-                    
-                    // Couleur de la barre selon le niveau
-                    if(level > 50) bar.style.background = "#28a745";
-                    else if(level > 20) bar.style.background = "#ffc107";
-                    else bar.style.background = "#dc3545";
-                });
+                await bind(UUIDS.pasS, 'pasS');
+                await bind(UUIDS.pasT, 'pasT');
+                await bind(UUIDS.vit, 'vit', true);
+                await bind(UUIDS.batt, 'batt-txt');
 
-            } catch (error) {
-                statusTxt.innerText = "Erreur ❌";
-                console.error(error);
-            }
+            } catch (e) { console.error(e); }
         });
     </script>
 </body>
