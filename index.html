@@ -23,7 +23,7 @@
 
     <div class="grid">
         <div class="card" style="grid-column: 1 / -1;">
-            <h2>État du Système (Modèle C++)</h2>
+            <h2>Type de mouvement</h2>
             <div id="motion-badge">À L'ARRÊT</div>
         </div>
 
@@ -34,12 +34,12 @@
         </div>
 
         <div class="card">
-            <h2>Accélération (aTot)</h2>
+            <h2>Accélération [m/s^2]</h2>
             <p id="atot">0.00 <small>m/s²</small></p>
         </div>
 
         <div class="card">
-            <h2>Vitesse</h2>
+            <h2>Vitesse [m/s]</h2>
             <p id="vit">0.0 <small>m/s</small></p>
         </div>
 
@@ -79,7 +79,7 @@
                     let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
                     if(id === 'etat') {
                         const b = document.getElementById('motion-badge');
-                        b.innerText = v == 1 ? "EN MOUVEMENT" : "À L'ARRÊT";
+                        b.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
                         b.className = v == 1 ? "moving" : "";
                     } else if(id === 'batt') {
                         document.getElementById('batt').innerText = v + "%";
