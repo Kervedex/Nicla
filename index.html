@@ -8,7 +8,6 @@
         :root { --p: #007bff; --s: #28a745; --d: #dc3545; --gray: #6c757d; --dark: #212529; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
         
-        /* Compteur Global */
         .global-stats { 
             background: var(--dark); color: white; width: 95%; max-width: 1200px; 
             padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
@@ -22,13 +21,12 @@
         #panel-L { border-top-color: var(--p); }
         #panel-R { border-top-color: var(--d); }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .card { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
-        .card h3 { font-size: 0.75rem; margin: 0; color: #888; text-transform: uppercase; }
-        .card p { font-size: 1.6rem; font-weight: 800; margin: 10px 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .card { background: #f8f9fa; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        .card h3 { font-size: 0.7rem; margin: 0; color: #888; text-transform: uppercase; }
+        .card p { font-size: 1.4rem; font-weight: 800; margin: 5px 0; }
 
-        /* Jauge Batterie */
-        .batt-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .batt-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-top: 8px; overflow: hidden; }
         .batt-fill { width: 0%; height: 100%; background: var(--s); transition: 0.5s; }
 
         .badge { padding: 12px; border-radius: 50px; font-weight: bold; color: white; background: var(--gray); margin-bottom: 15px; text-align: center; }
@@ -56,6 +54,7 @@
                     <div class="batt-container"><div id="barL" class="batt-fill"></div></div>
                 </div>
                 <div class="card"><h3>aTot</h3><p id="atotL">0.00</p></div>
+                <div class="card"><h3>Vitesse</h3><p id="vitL">0.0</p></div>
                 <div class="card"><h3>Pas Session</h3><p id="pasSL">0</p></div>
                 <div class="card" style="border-bottom: 3px solid var(--p);"><h3>Pas Total</h3><p id="pasTL">0</p></div>
             </div>
@@ -72,6 +71,7 @@
                     <div class="batt-container"><div id="barR" class="batt-fill"></div></div>
                 </div>
                 <div class="card"><h3>aTot</h3><p id="atotR">0.00</p></div>
+                <div class="card"><h3>Vitesse</h3><p id="vitR">0.0</p></div>
                 <div class="card"><h3>Pas Session</h3><p id="pasSR">0</p></div>
                 <div class="card" style="border-bottom: 3px solid var(--d);"><h3>Pas Total</h3><p id="pasTR">0</p></div>
             </div>
@@ -82,6 +82,7 @@
         const U = {
             pasS: "19b10000-1001-537e-4f6c-d104768a1214",
             pasT: "19b10000-1002-537e-4f6c-d104768a1214",
+            vit:  "19b10000-1003-537e-4f6c-d104768a1214",
             batt: "19b10000-1004-537e-4f6c-d104768a1214",
             atot: "19b10000-1005-537e-4f6c-d104768a1214",
             etat: "19b10000-1006-537e-4f6c-d104768a1214"
@@ -128,7 +129,7 @@
                     v == 1 ? badge.classList.add('moving') : badge.classList.remove('moving');
                 });
 
-                // Pas Totaux (pour le global)
+                // Pas Totaux
                 const cT = await service.getCharacteristic(U.pasT);
                 await cT.startNotifications();
                 cT.addEventListener('characteristicvaluechanged', (e) => {
@@ -138,17 +139,19 @@
                     updateGlobal();
                 });
 
-                // Pas Session + Atot
-                const listen = async (uuid, id, isFloat) => {
+                // Helper pour Vitesse, Atot, Pas Session
+                const listen = async (uuid, htmlId, isFloat) => {
                     const c = await service.getCharacteristic(uuid);
                     await c.startNotifications();
                     c.addEventListener('characteristicvaluechanged', (e) => {
-                        let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
-                        document.getElementById(id + side).innerText = v;
+                        let val = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
+                        document.getElementById(htmlId + side).innerText = val;
                     });
                 };
-                listen(U.pasS, 'pasS', false);
+
+                listen(U.vit, 'vit', true);
                 listen(U.atot, 'atot', true);
+                listen(U.pasS, 'pasS', false);
 
             } catch (err) { console.log(err); }
         }
@@ -156,13 +159,10 @@
         document.getElementById('btnL').onclick = () => connectNicla('L');
         document.getElementById('btnR').onclick = () => connectNicla('R');
 
-        // Bouton Reset (uniquement visuel sur le dashboard)
         document.getElementById('resetBtn').onclick = () => {
             stepsL = 0; stepsR = 0;
-            document.getElementById('pasTL').innerText = "0";
-            document.getElementById('pasTR').innerText = "0";
-            document.getElementById('pasSL').innerText = "0";
-            document.getElementById('pasSR').innerText = "0";
+            const ids = ['pasTL', 'pasTR', 'pasSL', 'pasSR', 'vitL', 'vitR'];
+            ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerText = "0"; });
             updateGlobal();
         };
     </script>
