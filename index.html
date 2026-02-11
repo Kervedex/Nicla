@@ -3,54 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Dual Tracker (Gauche & Droit)</title>
+    <title>Nicla Dual Tracker - Performance</title>
     <style>
-        :root { --p: #007bff; --s: #28a745; --d: #343a40; }
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        .main-container { display: flex; gap: 20px; width: 100%; max-width: 1100px; flex-wrap: wrap; justify-content: center; }
-        .side-panel { flex: 1; min-width: 320px; background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .card { background: #fafafa; padding: 15px; border-radius: 10px; border: 1px solid #eee; text-align: center; }
-        .card h3 { font-size: 0.8rem; margin: 0; color: #666; text-transform: uppercase; }
-        .card p { font-size: 1.5rem; font-weight: bold; margin: 5px 0; }
-        .badge { padding: 8px; border-radius: 5px; font-weight: bold; color: white; background: #666; margin-bottom: 10px; }
-        .moving { background: var(--p) !important; }
-        button { width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--s); color: white; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        :root { --p: #007bff; --s: #28a745; --d: #dc3545; --gray: #6c757d; --dark: #212529; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        
+        /* Compteur Global */
+        .global-stats { 
+            background: var(--dark); color: white; width: 95%; max-width: 1200px; 
+            padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .global-steps { font-size: 4rem; font-weight: 900; margin: 10px 0; color: var(--s); }
+        .reset-btn { background: var(--d); color: white; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-weight: bold; }
+
+        .main-container { display: flex; flex-direction: row; gap: 20px; width: 95%; max-width: 1200px; justify-content: center; flex-wrap: wrap; }
+        .side-panel { flex: 1; min-width: 340px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-top: 8px solid var(--gray); }
+        #panel-L { border-top-color: var(--p); }
+        #panel-R { border-top-color: var(--d); }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .card { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        .card h3 { font-size: 0.75rem; margin: 0; color: #888; text-transform: uppercase; }
+        .card p { font-size: 1.6rem; font-weight: 800; margin: 10px 0; }
+
+        /* Jauge Batterie */
+        .batt-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .batt-fill { width: 0%; height: 100%; background: var(--s); transition: 0.5s; }
+
+        .badge { padding: 12px; border-radius: 50px; font-weight: bold; color: white; background: var(--gray); margin-bottom: 15px; text-align: center; }
+        .moving { background: var(--s) !important; }
+        .conn-btn { width: 100%; padding: 15px; border-radius: 50px; border: none; background: #333; color: white; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <h1>Nicla Dual Tracker</h1>
+    <div class="global-stats">
+        <h2>TOTAL PAS (GLOBAL)</h2>
+        <div class="global-steps" id="totalGlobal">0</div>
+        <button class="reset-btn" id="resetBtn">RÉINITIALISER LES COMPTEURS</button>
+    </div>
     
     <div class="main-container">
-        <div class="side-panel">
-            <h2>Pied GAUCHE</h2>
-            <button id="btnL">Connecter GAUCHE (NiclaL)</button>
+        <div class="side-panel" id="panel-L">
+            <h2 style="color: var(--p)">Pied GAUCHE</h2>
+            <button id="btnL" class="conn-btn">Connecter GAUCHE</button>
             <div id="badgeL" class="badge">DÉCONNECTÉ</div>
             <div class="grid">
-                <div class="card"><h3>Batterie</h3><p id="battL">--V</p></div>
+                <div class="card" style="grid-column: span 2;">
+                    <h3>Batterie</h3>
+                    <p id="battL">--V</p>
+                    <div class="batt-container"><div id="barL" class="batt-fill"></div></div>
+                </div>
                 <div class="card"><h3>aTot</h3><p id="atotL">0.00</p></div>
                 <div class="card"><h3>Pas Session</h3><p id="pasSL">0</p></div>
-                <div class="card"><h3>Pas Total</h3><p id="pasTL">0</p></div>
+                <div class="card" style="border-bottom: 3px solid var(--p);"><h3>Pas Total</h3><p id="pasTL">0</p></div>
             </div>
         </div>
 
-        <div class="side-panel">
-            <h2>Pied DROIT</h2>
-            <button id="btnR">Connecter DROIT (NiclaR)</button>
+        <div class="side-panel" id="panel-R">
+            <h2 style="color: var(--d)">Pied DROIT</h2>
+            <button id="btnR" class="conn-btn">Connecter DROIT</button>
             <div id="badgeR" class="badge">DÉCONNECTÉ</div>
             <div class="grid">
-                <div class="card"><h3>Batterie</h3><p id="battR">--V</p></div>
+                <div class="card" style="grid-column: span 2;">
+                    <h3>Batterie</h3>
+                    <p id="battR">--V</p>
+                    <div class="batt-container"><div id="barR" class="batt-fill"></div></div>
+                </div>
                 <div class="card"><h3>aTot</h3><p id="atotR">0.00</p></div>
                 <div class="card"><h3>Pas Session</h3><p id="pasSR">0</p></div>
-                <div class="card"><h3>Pas Total</h3><p id="pasTR">0</p></div>
+                <div class="card" style="border-bottom: 3px solid var(--d);"><h3>Pas Total</h3><p id="pasTR">0</p></div>
             </div>
         </div>
     </div>
 
     <script>
-        const SERVICE_UUID = "19b10000-0000-537e-4f6c-d104768a1214";
         const U = {
             pasS: "19b10000-1001-537e-4f6c-d104768a1214",
             pasT: "19b10000-1002-537e-4f6c-d104768a1214",
@@ -59,51 +87,67 @@
             etat: "19b10000-1006-537e-4f6c-d104768a1214"
         };
 
+        let stepsL = 0, stepsR = 0;
+
+        function updateGlobal() {
+            document.getElementById('totalGlobal').innerText = stepsL + stepsR;
+        }
+
         async function connectNicla(side) {
             try {
-                const namePrefix = side === 'L' ? 'NiclaL' : 'NiclaR';
+                const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: namePrefix }],
-                    optionalServices: [SERVICE_UUID]
+                    filters: [{ name: nameT }],
+                    optionalServices: ["19b10000-0000-537e-4f6c-d104768a1214"]
                 });
                 
                 const server = await device.gatt.connect();
-                const service = await server.getPrimaryService(SERVICE_UUID);
+                const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
                 
                 document.getElementById('btn' + side).style.display = 'none';
                 const badge = document.getElementById('badge' + side);
                 badge.innerText = "À L'ARRÊT";
-                badge.style.background = "#28a745";
 
-                // Ecoute Etat
+                // Batterie + Jauge
+                const cB = await service.getCharacteristic(U.batt);
+                await cB.startNotifications();
+                cB.addEventListener('characteristicvaluechanged', (e) => {
+                    let v = e.target.value.getFloat32(0, true);
+                    let pct = Math.round((v - 3.4) * 100 / (4.2 - 3.4));
+                    pct = Math.max(0, Math.min(100, pct));
+                    document.getElementById('batt' + side).innerText = pct + "% (" + v.toFixed(2) + "V)";
+                    document.getElementById('bar' + side).style.width = pct + "%";
+                });
+
+                // Etat
                 const cE = await service.getCharacteristic(U.etat);
                 await cE.startNotifications();
                 cE.addEventListener('characteristicvaluechanged', (e) => {
                     let v = e.target.value.getUint32(0, true);
                     badge.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
-                    badge.className = v == 1 ? "badge moving" : "badge";
+                    v == 1 ? badge.classList.add('moving') : badge.classList.remove('moving');
                 });
 
-                // Ecoute Batterie
-                const cB = await service.getCharacteristic(U.batt);
-                await cB.startNotifications();
-                cB.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = e.target.value.getFloat32(0, true);
-                    document.getElementById('batt' + side).innerText = v.toFixed(2) + " V";
+                // Pas Totaux (pour le global)
+                const cT = await service.getCharacteristic(U.pasT);
+                await cT.startNotifications();
+                cT.addEventListener('characteristicvaluechanged', (e) => {
+                    let v = e.target.value.getUint32(0, true);
+                    if (side === 'L') stepsL = v; else stepsR = v;
+                    document.getElementById('pasT' + side).innerText = v;
+                    updateGlobal();
                 });
 
-                // Helper pour les autres
-                const listen = async (uuid, htmlId, isFloat) => {
+                // Pas Session + Atot
+                const listen = async (uuid, id, isFloat) => {
                     const c = await service.getCharacteristic(uuid);
                     await c.startNotifications();
                     c.addEventListener('characteristicvaluechanged', (e) => {
                         let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
-                        document.getElementById(htmlId + side).innerText = v;
+                        document.getElementById(id + side).innerText = v;
                     });
                 };
-
                 listen(U.pasS, 'pasS', false);
-                listen(U.pasT, 'pasT', false);
                 listen(U.atot, 'atot', true);
 
             } catch (err) { console.log(err); }
@@ -111,6 +155,16 @@
 
         document.getElementById('btnL').onclick = () => connectNicla('L');
         document.getElementById('btnR').onclick = () => connectNicla('R');
+
+        // Bouton Reset (uniquement visuel sur le dashboard)
+        document.getElementById('resetBtn').onclick = () => {
+            stepsL = 0; stepsR = 0;
+            document.getElementById('pasTL').innerText = "0";
+            document.getElementById('pasTR').innerText = "0";
+            document.getElementById('pasSL').innerText = "0";
+            document.getElementById('pasSR').innerText = "0";
+            updateGlobal();
+        };
     </script>
 </body>
 </html>
