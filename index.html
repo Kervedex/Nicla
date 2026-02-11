@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nicla Tracker Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; width: 100%; max-width: 800px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .card h2 { margin: 0; font-size: 1rem; color: #666; }
+        .card p { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #007bff; }
+        button { padding: 15px 30px; font-size: 1.2rem; background: #28a745; color: white; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 30px; }
+        button:disabled { background: #ccc; }
+        #status { margin-bottom: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Nicla Tracker</h1>
+    <div id="status">Statut : Déconnecté</div>
+    <button id="connectBtn">Se connecter à la Nicla</button>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Pas (Session)</h2>
+            <p id="pasSession">0</p>
+        </div>
+        <div class="card">
+            <h2>Pas (Total)</h2>
+            <p id="pasTotal">0</p>
+        </div>
+        <div class="card">
+            <h2>Vitesse</h2>
+            <p id="vitesse">0.0 <span style="font-size: 1rem;">m/s</span></p>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_UUID = "19b10000-0000-537e-4f6c-d104768a1214";
+        const CHAR_PAS_SESSION = "19b10000-1001-537e-4f6c-d104768a1214";
+        const CHAR_PAS_TOTAL = "19b10000-1002-537e-4f6c-d104768a1214";
+        const CHAR_VITESSE = "19b10000-1003-537e-4f6c-d104768a1214";
+
+        const connectBtn = document.getElementById('connectBtn');
+        const statusTxt = document.getElementById('status');
+
+        connectBtn.addEventListener('click', async () => {
+            try {
+                statusTxt.innerText = "Recherche...";
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'Nicla' }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                statusTxt.innerText = "Connecté !";
+                connectBtn.disabled = true;
+
+                // Abonnement Pas Session
+                const charSession = await service.getCharacteristic(CHAR_PAS_SESSION);
+                await charSession.startNotifications();
+                charSession.addEventListener('characteristicvaluechanged', (e) => {
+                    document.getElementById('pasSession').innerText = e.target.value.getUint32(0, true);
+                });
+
+                // Abonnement Pas Total
+                const charTotal = await service.getCharacteristic(CHAR_PAS_TOTAL);
+                await charTotal.startNotifications();
+                charTotal.addEventListener('characteristicvaluechanged', (e) => {
+                    document.getElementById('pasTotal').innerText = e.target.value.getUint32(0, true);
+                });
+
+                // Abonnement Vitesse
+                const charVitesse = await service.getCharacteristic(CHAR_VITESSE);
+                await charVitesse.startNotifications();
+                charVitesse.addEventListener('characteristicvaluechanged', (e) => {
+                    document.getElementById('vitesse').innerText = e.target.value.getFloat32(0, true).toFixed(2);
+                });
+
+            } catch (error) {
+                console.error(error);
+                statusTxt.innerText = "Erreur : " + error;
+            }
+        });
+    </script>
+</body>
+</html>
