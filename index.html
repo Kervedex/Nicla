@@ -3,26 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Debug</title>
+    <title>Nicla Dual Tracker (Gauche & Droit)</title>
     <style>
         :root { --p: #007bff; --s: #28a745; --d: #343a40; }
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; max-width: 900px; }
-        .card { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #motion-badge { padding: 10px 30px; border-radius: 50px; font-weight: bold; color: white; background: #666; display: inline-block; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        .main-container { display: flex; gap: 20px; width: 100%; max-width: 1100px; flex-wrap: wrap; justify-content: center; }
+        .side-panel { flex: 1; min-width: 320px; background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .card { background: #fafafa; padding: 15px; border-radius: 10px; border: 1px solid #eee; text-align: center; }
+        .card h3 { font-size: 0.8rem; margin: 0; color: #666; text-transform: uppercase; }
+        .card p { font-size: 1.5rem; font-weight: bold; margin: 5px 0; }
+        .badge { padding: 8px; border-radius: 5px; font-weight: bold; color: white; background: #666; margin-bottom: 10px; }
         .moving { background: var(--p) !important; }
-        button { padding: 15px 30px; border-radius: 50px; background: var(--s); color: white; border: none; cursor: pointer; margin-bottom: 20px; }
+        button { width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--s); color: white; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h1>Nicla Tracker</h1>
-    <button id="conn">CONNEXION</button>
-    <div class="grid">
-        <div class="card" style="grid-column: 1/-1;"><h2>État</h2><div id="motion-badge">À L'ARRÊT</div></div>
-        <div class="card"><h2>Batterie</h2><p id="batt">--V</p></div>
-        <div class="card"><h2>aTot</h2><p id="atot">0.00</p></div>
-        <div class="card"><h2>Pas Session</h2><p id="pasS">0</p></div>
-        <div class="card"><h2>Pas Total</h2><p id="pasT">0</p></div>
+
+    <h1>Nicla Dual Tracker</h1>
+    
+    <div class="main-container">
+        <div class="side-panel">
+            <h2>Pied GAUCHE</h2>
+            <button id="btnL">Connecter GAUCHE (NiclaL)</button>
+            <div id="badgeL" class="badge">DÉCONNECTÉ</div>
+            <div class="grid">
+                <div class="card"><h3>Batterie</h3><p id="battL">--V</p></div>
+                <div class="card"><h3>aTot</h3><p id="atotL">0.00</p></div>
+                <div class="card"><h3>Pas Session</h3><p id="pasSL">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTL">0</p></div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <h2>Pied DROIT</h2>
+            <button id="btnR">Connecter DROIT (NiclaR)</button>
+            <div id="badgeR" class="badge">DÉCONNECTÉ</div>
+            <div class="grid">
+                <div class="card"><h3>Batterie</h3><p id="battR">--V</p></div>
+                <div class="card"><h3>aTot</h3><p id="atotR">0.00</p></div>
+                <div class="card"><h3>Pas Session</h3><p id="pasSR">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTR">0</p></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -35,44 +59,58 @@
             etat: "19b10000-1006-537e-4f6c-d104768a1214"
         };
 
-        document.getElementById('conn').addEventListener('click', async () => {
-            const device = await navigator.bluetooth.requestDevice({
-                filters: [{ namePrefix: 'Nicla' }], optionalServices: [SERVICE_UUID]
-            });
-            const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(SERVICE_UUID);
-
-            // 1. Écoute ETAT (Mouvement)
-            const cEtat = await service.getCharacteristic(U.etat);
-            await cEtat.startNotifications();
-            cEtat.addEventListener('characteristicvaluechanged', (e) => {
-                let v = e.target.value.getUint32(0, true);
-                const b = document.getElementById('motion-badge');
-                b.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
-                b.className = v == 1 ? "moving" : "";
-            });
-
-            // 2. Écoute BATTERIE (Voltage brut)
-            const cBatt = await service.getCharacteristic(U.batt);
-            await cBatt.startNotifications();
-            cBatt.addEventListener('characteristicvaluechanged', (e) => {
-                let v = e.target.value.getFloat32(0, true);
-                document.getElementById('batt').innerText = v.toFixed(2) + " V";
-            });
-
-            // 3. Le reste
-            const listen = async (uuid, id, isFloat) => {
-                const c = await service.getCharacteristic(uuid);
-                await c.startNotifications();
-                c.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
-                    document.getElementById(id).innerText = v;
+        async function connectNicla(side) {
+            try {
+                const namePrefix = side === 'L' ? 'NiclaL' : 'NiclaR';
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: namePrefix }],
+                    optionalServices: [SERVICE_UUID]
                 });
-            };
-            listen(U.pasS, 'pasS', false);
-            listen(U.pasT, 'pasT', false);
-            listen(U.atot, 'atot', true);
-        });
+                
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                
+                document.getElementById('btn' + side).style.display = 'none';
+                const badge = document.getElementById('badge' + side);
+                badge.innerText = "À L'ARRÊT";
+                badge.style.background = "#28a745";
+
+                // Ecoute Etat
+                const cE = await service.getCharacteristic(U.etat);
+                await cE.startNotifications();
+                cE.addEventListener('characteristicvaluechanged', (e) => {
+                    let v = e.target.value.getUint32(0, true);
+                    badge.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
+                    badge.className = v == 1 ? "badge moving" : "badge";
+                });
+
+                // Ecoute Batterie
+                const cB = await service.getCharacteristic(U.batt);
+                await cB.startNotifications();
+                cB.addEventListener('characteristicvaluechanged', (e) => {
+                    let v = e.target.value.getFloat32(0, true);
+                    document.getElementById('batt' + side).innerText = v.toFixed(2) + " V";
+                });
+
+                // Helper pour les autres
+                const listen = async (uuid, htmlId, isFloat) => {
+                    const c = await service.getCharacteristic(uuid);
+                    await c.startNotifications();
+                    c.addEventListener('characteristicvaluechanged', (e) => {
+                        let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
+                        document.getElementById(htmlId + side).innerText = v;
+                    });
+                };
+
+                listen(U.pasS, 'pasS', false);
+                listen(U.pasT, 'pasT', false);
+                listen(U.atot, 'atot', true);
+
+            } catch (err) { console.log(err); }
+        }
+
+        document.getElementById('btnL').onclick = () => connectNicla('L');
+        document.getElementById('btnR').onclick = () => connectNicla('R');
     </script>
 </body>
 </html>
