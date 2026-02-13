@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Pro Dashboard V3</title>
+    <title>Nicla Pro - Jump Tracker</title>
     <style>
-        :root { --p: #007bff; --s: #28a745; --d: #dc3545; --w: #ffc107; --purp: #6f42c1; --gray: #6c757d; --dark: #212529; }
+        :root { --p: #007bff; --s: #28a745; --d: #dc3545; --w: #ffc107; --purp: #6f42c1; --cyan: #0dcaf0; --gray: #6c757d; --dark: #212529; }
         body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
         
         /* HEADER GLOBAL */
@@ -13,24 +13,27 @@
             background: var(--dark); color: white; width: 95%; max-width: 1100px; 
             padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 20px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; /* 3 Colonnes */
+            align-items: center; gap: 20px;
         }
         
-        /* Big Badge Status Global */
         .global-status-badge {
-            grid-column: span 2;
-            font-size: 2rem; font-weight: 900; padding: 15px; border-radius: 15px;
-            background: #333; color: #777; letter-spacing: 2px; text-transform: uppercase;
-            transition: 0.3s;
+            grid-column: span 3;
+            font-size: 2.5rem; font-weight: 900; padding: 15px; border-radius: 15px;
+            background: #333; color: #777; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
         }
 
-        .count-box { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; }
-        .global-steps { font-size: 3.5rem; font-weight: 900; line-height: 1; color: var(--s); }
-        .sub-text { font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+        .count-box { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; min-height: 100px; display:flex; flex-direction:column; justify-content:center;}
         
-        .reset-btn { grid-column: span 2; background: var(--d); color: white; border: none; padding: 12px; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 50%; margin-left: auto; margin-right: auto;}
+        .global-val { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+        .val-steps { color: var(--s); }
+        .val-jumps { color: var(--cyan); text-shadow: 0 0 15px rgba(13, 202, 240, 0.5); }
+        
+        .sub-text { font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        
+        .reset-btn { grid-column: span 3; background: var(--d); color: white; border: none; padding: 12px; border-radius: 50px; cursor: pointer; font-weight: bold; width: 50%; margin: 10px auto 0 auto;}
 
-        /* PANNEAUX PIEDS */
+        /* PIEDS */
         .container { display: flex; gap: 15px; width: 100%; max-width: 1100px; justify-content: center; flex-wrap: wrap; }
         .foot-panel { 
             flex: 1; min-width: 340px; background: white; padding: 20px; border-radius: 20px; 
@@ -45,82 +48,70 @@
             padding: 5px 10px; border-radius: 5px; background: #eee; color: #999;
         }
 
-        /* GRILLE DE DATA */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .card { background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
         .card h3 { font-size: 0.7rem; margin: 0; color: #888; text-transform: uppercase; }
         .card p { font-size: 1.4rem; font-weight: 800; margin: 2px 0; color: #333; }
         
-        .card-highlight { background: #e3f2fd; border-color: #bbdefb; } /* Pour les pas */
-
-        /* BATTERIE */
         .batt-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top:5px; }
         .batt-fill { height: 100%; width: 0%; background: var(--s); transition: 0.5s; }
-
-        /* BOUTON CONNECT */
         button.conn { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
         
         /* ETATS COULEURS */
-        .bg-walk { background: var(--s) !important; color: white !important; }
-        .bg-run { background: var(--w) !important; color: #333 !important; }
+        .bg-walk   { background: var(--s) !important; color: white !important; }
+        .bg-run    { background: var(--w) !important; color: #333 !important; }
         .bg-sprint { background: var(--purp) !important; color: white !important; }
+        .bg-jump   { background: var(--cyan) !important; color: #000 !important; box-shadow: 0 0 20px var(--cyan); transform: scale(1.02); }
 
     </style>
 </head>
 <body>
 
     <div class="global-stats">
-        <div id="globalStatus" class="global-status-badge">ARRÊT COMPLET</div>
+        <div id="globalStatus" class="global-status-badge">ARRÊT</div>
         
         <div class="count-box">
-            <div class="sub-text">Analyse de Pas (Gait Logic)</div>
-            <div class="global-steps" id="smartSteps">0</div>
+            <div class="sub-text">Pas (Marche/Course)</div>
+            <div class="global-val val-steps" id="smartSteps">0</div>
         </div>
         
-        <div class="count-box">
-            <div class="sub-text">État Système</div>
-            <div style="font-size:1.5rem; font-weight:bold; margin-top:10px" id="sysState">Prêt</div>
+        <div class="count-box" style="border: 2px solid var(--cyan)">
+            <div class="sub-text" style="color:var(--cyan); font-weight:bold;">SAUTS DÉTECTÉS</div>
+            <div class="global-val val-jumps" id="jumpCount">0</div>
         </div>
 
-        <button class="reset-btn" id="btnReset">RESET TOUS LES COMPTEURS</button>
+        <div class="count-box">
+            <div class="sub-text">Type Mouvement</div>
+            <div style="font-size:1.5rem; font-weight:bold; margin-top:10px" id="sysState">--</div>
+        </div>
+
+        <button class="reset-btn" id="btnReset">RESET TOUT</button>
     </div>
 
     <div class="container">
         <div class="foot-panel" id="panel-L">
-            <h2 style="color:var(--p); margin-top:0;">PIED GAUCHE</h2>
-            <div id="localStatL" class="local-status">STOP</div>
-            <button class="conn" id="btnL" onclick="connect('L')">Connecter Gauche</button>
-            
+            <h2 style="color:var(--p); margin-top:0;">GAUCHE</h2>
+            <div id="localStatL" class="local-status">SOL</div>
+            <button class="conn" id="btnL" onclick="connect('L')">Connecter</button>
             <div class="grid">
-                <div class="card card-highlight"><h3>Pas Session</h3><p id="pasSL">0</p></div>
-                <div class="card card-highlight"><h3>Pas Total</h3><p id="pasTL">0</p></div>
-
-                <div class="card"><h3>Vitesse (m/s)</h3><p id="vitL">0.00</p></div>
-                <div class="card"><h3>Accél. (m/s²)</h3><p id="accL">0.00</p></div>
-                
-                <div class="card" style="grid-column: span 2;">
-                    <h3>Batterie</h3><p id="battL">--%</p>
-                    <div class="batt-bar"><div id="barL" class="batt-fill"></div></div>
-                </div>
+                <div class="card"><h3>Pas Session</h3><p id="pasSL">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTL">0</p></div>
+                <div class="card"><h3>Vitesse</h3><p id="vitL">0.00</p></div>
+                <div class="card"><h3>Accél.</h3><p id="accL">0.00</p></div>
+                <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battL">--%</p><div class="batt-bar"><div id="barL" class="batt-fill"></div></div></div>
             </div>
         </div>
 
         <div class="foot-panel" id="panel-R">
-            <h2 style="color:var(--d); margin-top:0;">PIED DROIT</h2>
-            <div id="localStatR" class="local-status">STOP</div>
-            <button class="conn" id="btnR" onclick="connect('R')">Connecter Droit</button>
-            
+            <h2 style="color:var(--d); margin-top:0;">DROITE</h2>
+            <div id="localStatR" class="local-status">SOL</div>
+            <button class="conn" id="btnR" onclick="connect('R')">Connecter</button>
             <div class="grid">
-                <div class="card card-highlight"><h3>Pas Session</h3><p id="pasSR">0</p></div>
-                <div class="card card-highlight"><h3>Pas Total</h3><p id="pasTR">0</p></div>
-
-                <div class="card"><h3>Vitesse (m/s)</h3><p id="vitR">0.00</p></div>
-                <div class="card"><h3>Accél. (m/s²)</h3><p id="accR">0.00</p></div>
-                
-                <div class="card" style="grid-column: span 2;">
-                    <h3>Batterie</h3><p id="battR">--%</p>
-                    <div class="batt-bar"><div id="barR" class="batt-fill"></div></div>
-                </div>
+                <div class="card"><h3>Pas Session</h3><p id="pasSR">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTR">0</p></div>
+                <div class="card"><h3>Vitesse</h3><p id="vitR">0.00</p></div>
+                <div class="card"><h3>Accél.</h3><p id="accR">0.00</p></div>
+                <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battR">--%</p><div class="batt-bar"><div id="barR" class="batt-fill"></div></div></div>
             </div>
         </div>
     </div>
@@ -135,70 +126,92 @@
             etat: "19b10000-1006-537e-4f6c-d104768a1214"
         };
 
-        let stateL = 0, stateR = 0, smartSteps = 0;
+        // Variables Système
+        let stateL = 0, stateR = 0;
+        let smartSteps = 0, jumpSteps = 0;
         let writers = { L: null, R: null };
 
-        // --- MISE A JOUR GLOBALE ---
+        // Variables Logique Saut
+        let inAirPhase = false; // Est-ce qu'on est en l'air ?
+        let blockStepCount = false; // Bloquer les pas après un saut
+
+        function updateDisplays() {
+            document.getElementById('smartSteps').innerText = smartSteps;
+            document.getElementById('jumpCount').innerText = jumpSteps;
+        }
+
         function updateGlobalStatus() {
             const el = document.getElementById('globalStatus');
             const sys = document.getElementById('sysState');
+            el.className = "global-status-badge"; 
 
-            // Priorité au Sprint, puis Course, puis Marche
+            // 1. DÉTECTION SAUT (EN TEMPS RÉEL)
+            if (stateL > 0 && stateR > 0) {
+                el.innerText = "EN L'AIR 🚀";
+                el.classList.add('bg-jump');
+                sys.innerText = "Phase de Vol";
+                
+                // On active la phase de saut
+                inAirPhase = true;
+                return;
+            }
+
+            // 2. STATUS CLASSIQUE
             let maxState = Math.max(stateL, stateR);
-
-            el.className = "global-status-badge"; // Reset classes
-
             if (maxState === 3) {
-                el.innerText = "SPRINT GLOBAL ⚡";
-                el.classList.add('bg-sprint');
-                sys.innerText = "Performance Max";
+                el.innerText = "SPRINT ⚡"; el.classList.add('bg-sprint'); sys.innerText = "Performance";
             } else if (maxState === 2) {
-                el.innerText = "COURSE";
-                el.classList.add('bg-run');
-                sys.innerText = "Endurance";
+                el.innerText = "COURSE"; el.classList.add('bg-run'); sys.innerText = "Endurance";
             } else if (maxState === 1) {
-                el.innerText = "MARCHE";
-                el.classList.add('bg-walk');
-                sys.innerText = "Activité";
+                el.innerText = "MARCHE"; el.classList.add('bg-walk'); sys.innerText = "Activité";
             } else {
-                el.innerText = "ARRÊT COMPLET";
-                el.style.background = "#333";
-                el.style.color = "#777";
-                sys.innerText = "Repos";
+                el.innerText = "ARRÊT"; el.style.background = "#333"; el.style.color = "#777"; sys.innerText = "Repos";
             }
         }
 
-        // --- MISE A JOUR LOCALE ---
         function updateLocalStatus(side, s) {
             const el = document.getElementById('localStat' + side);
             if (s === 0) { el.innerText = "SOL"; el.style.background="#eee"; el.style.color="#999"; }
-            if (s === 1) { el.innerText = "MARCHE"; el.style.background="var(--s)"; el.style.color="white"; }
-            if (s === 2) { el.innerText = "COURSE"; el.style.background="var(--w)"; el.style.color="#333"; }
-            if (s === 3) { el.innerText = "SPRINT"; el.style.background="var(--purp)"; el.style.color="white"; }
+            if (s >= 1) { el.innerText = "EN L'AIR"; el.style.background="var(--p)"; el.style.color="white"; }
         }
 
-        // --- LOGIQUE SMART STEPS ---
+        // --- CŒUR DU SYSTÈME (LOGIQUE DE COMPTAGE) ---
         function processGait(side, newState) {
-            // Détection croisée (Gait Analysis)
-            if (newState === 0) { // Si un pied touche le sol
-                let oldState = (side === 'L') ? stateL : stateR;
-                let otherState = (side === 'L') ? stateR : stateL;
+            
+            // Si on atterrit (Transition 1 -> 0)
+            if (newState === 0) {
                 
-                // Si ce pied était en l'air ET que l'autre est au sol
-                if (oldState > 0 && otherState === 0) {
-                    smartSteps++;
-                    document.getElementById('smartSteps').innerText = smartSteps;
+                // SCÉNARIO A : ON ATTERRIT D'UN SAUT
+                if (inAirPhase) {
+                    jumpSteps++; // +1 Saut
+                    inAirPhase = false; // Fin de la phase de vol
+                    
+                    // ON BLOQUE LE COMPTEUR DE PAS
+                    // Car un atterrissage de saut ne doit pas compter comme un pas
+                    blockStepCount = true; 
+                    setTimeout(() => { blockStepCount = false; }, 500); // Débloque après 500ms
+                    
+                    updateDisplays();
+                }
+                // SCÉNARIO B : MARCHE NORMALE (Si pas bloqué)
+                else if (!blockStepCount) {
+                    let oldState = (side === 'L') ? stateL : stateR;
+                    let otherState = (side === 'L') ? stateR : stateL;
+                    
+                    // Si moi j'étais en l'air ET que l'autre est au sol = Vrai Pas
+                    if (oldState > 0 && otherState === 0) {
+                        smartSteps++;
+                        updateDisplays();
+                    }
                 }
             }
-            
-            // Mise à jour variables
+
+            // Mise à jour mémoire
             if (side === 'L') stateL = newState; else stateR = newState;
-            
             updateLocalStatus(side, newState);
             updateGlobalStatus();
         }
 
-        // --- CONNEXION BLE ---
         async function connect(side) {
             try {
                 const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
@@ -208,9 +221,8 @@
                 });
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
-                
                 document.getElementById('btn' + side).style.display = 'none';
-                writers[side] = await service.getCharacteristic(UUID.pasS); // Pour le reset (on peut écrire sur n'importe lequel)
+                writers[side] = await service.getCharacteristic(UUID.pasS);
 
                 const listen = async (uuid, cb) => {
                     const c = await service.getCharacteristic(uuid);
@@ -218,7 +230,6 @@
                     c.addEventListener('characteristicvaluechanged', cb);
                 };
 
-                // Écouteurs
                 listen(UUID.etat, (e) => processGait(side, e.target.value.getUint32(0, true)));
                 listen(UUID.pasS, (e) => document.getElementById('pasS'+side).innerText = e.target.value.getUint32(0,true));
                 listen(UUID.pasT, (e) => document.getElementById('pasT'+side).innerText = e.target.value.getUint32(0,true));
@@ -231,23 +242,18 @@
                     document.getElementById('bar'+side).style.width = pct + "%";
                 });
 
-            } catch (err) { console.error(err); alert("Erreur connexion " + side); }
+            } catch (err) { console.error(err); alert("Erreur: " + err); }
         }
 
-        // --- BOUTON RESET ---
         document.getElementById('btnReset').onclick = async () => {
-            smartSteps = 0; document.getElementById('smartSteps').innerText = "0";
-            
-            // On envoie le signal de reset (ecriture de 0)
-            const payload = new Uint32Array([0]); // Valeur 0
-            // Note: Côté Arduino, on écoute 'pasSessionChar' ou 'pasTotauxChar' pour le reset
+            smartSteps = 0; jumpSteps = 0; inAirPhase = false; blockStepCount = false;
+            updateDisplays();
+            const payload = new Uint32Array([0]);
             if(writers.L) await writers.L.writeValue(payload);
             if(writers.R) await writers.R.writeValue(payload);
-            
-            // Reset visuel immédiat (pour réactivité)
             ['pasS','pasT','vit','acc'].forEach(p => {
-                document.getElementById(p+'L').innerText = "0";
-                document.getElementById(p+'R').innerText = "0";
+                if(document.getElementById(p+'L')) document.getElementById(p+'L').innerText = "0";
+                if(document.getElementById(p+'R')) document.getElementById(p+'R').innerText = "0";
             });
             updateGlobalStatus();
         };
