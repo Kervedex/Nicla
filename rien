@@ -1,1 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nicla Smart Gait Tracker</title>
+    <style>
+        :root { --p: #007bff; --s: #28a745; --d: #dc3545; --gray: #6c757d; --dark: #212529; }
+        body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        
+        .global-stats { 
+            background: var(--dark); color: white; width: 95%; max-width: 800px; 
+            padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        .global-steps { font-size: 5rem; font-weight: 900; margin: 0; line-height: 1; color: var(--s); }
+        .sub-text { font-size: 1rem; opacity: 0.7; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .reset-btn { background: var(--d); color: white; border: none; padding: 12px 30px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
+        .container { display: flex; gap: 15px; width: 100%; max-width: 800px; justify-content: center; }
+        .foot-panel { 
+            flex: 1; background: white; padding: 20px; border-radius: 20px; 
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            border-top: 10px solid var(--gray); position: relative;
+        }
+        #panel-L { border-top-color: var(--p); }
+        #panel-R { border-top-color: var(--d); }
+
+        .status-indicator {
+            font-size: 1.2rem; font-weight: bold; margin: 20px 0; padding: 10px;
+            border-radius: 10px; background: #eee; color: #777; transition: 0.2s;
+        }
+        .status-move { background: var(--s); color: white; transform: scale(1.05); box-shadow: 0 5px 15px rgba(40,167,69,0.3); }
+
+        .debug-val { font-family: monospace; color: #aaa; margin-top: 10px; font-size: 0.9rem; }
+        button.conn { width: 100%; padding: 15px; border-radius: 10px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="global-stats">
+        <div class="sub-text">Pas Confirmés (Smart Detection)</div>
+        <div class="global-steps" id="smartSteps">0</div>
+        <br>
+        <button class="reset-btn" onclick="resetSteps()">RÉINITIALISER</button>
+    </div>
+
+    <div class="container">
+        <div class="foot-panel" id="panel-L">
+            <h2 style="color:var(--p)">GAUCHE</h2>
+            <button class="conn" id="btnL" onclick="connect('L')">Connecter</button>
+            <div id="statusL" class="status-indicator">AU SOL</div>
+            <div class="debug-val">Acc: <span id="accL">0.00</span></div>
+        </div>
+
+        <div class="foot-panel" id="panel-R">
+            <h2 style="color:var(--d)">DROIT</h2>
+            <button class="conn" id="btnR" onclick="connect('R')">Connecter</button>
+            <div id="statusR" class="status-indicator">AU SOL</div>
+            <div class="debug-val">Acc: <span id="accR">0.00</span></div>
+        </div>
+    </div>
+
+    <script>
+        // UUIDs
+        const SERVICE_UUID = "19b10000-0000-537e-4f6c-d104768a1214";
+        const CHAR_ETAT    = "19b10000-1006-537e-4f6c-d104768a1214"; // 0=Sol, 1=Air
+        const CHAR_ACC     = "19b10000-1005-537e-4f6c-d104768a1214";
+
+        // État du système
+        let stateL = 0; // 0 = Sol, 1 = Mouvement
+        let stateR = 0;
+        let globalCounter = 0;
+
+        function updateDisplay() {
+            document.getElementById('smartSteps').innerText = globalCounter;
+        }
+
+        function resetSteps() {
+            globalCounter = 0;
+            updateDisplay();
+        }
+
+        // --- CŒUR DU SYSTÈME : LOGIQUE CROISÉE ---
+        function processLogic(side, newState) {
+            // Si c'est le pied GAUCHE qui change
+            if (side === 'L') {
+                // S'il vient d'atterrir (passe de 1 à 0)
+                if (stateL === 1 && newState === 0) {
+                    // VERIFICATION : Est-ce que le pied DROIT est au sol ?
+                    if (stateR === 0) {
+                        globalCounter++; // PAS VALIDE !
+                        updateDisplay();
+                    } else {
+                        console.log("Rejeté : Les deux pieds bougent !");
+                    }
+                }
+                stateL = newState; // Mise à jour mémoire
+                updateVisual('L', newState);
+            }
+
+            // Si c'est le pied DROIT qui change
+            if (side === 'R') {
+                if (stateR === 1 && newState === 0) {
+                    // VERIFICATION : Est-ce que le pied GAUCHE est au sol ?
+                    if (stateL === 0) {
+                        globalCounter++; // PAS VALIDE !
+                        updateDisplay();
+                    } else {
+                        console.log("Rejeté : Les deux pieds bougent !");
+                    }
+                }
+                stateR = newState;
+                updateVisual('R', newState);
+            }
+        }
+
+        function updateVisual(side, state) {
+            const el = document.getElementById('status' + side);
+            if (state == 1) {
+                el.innerText = "EN L'AIR";
+                el.className = "status-indicator status-move";
+            } else {
+                el.innerText = "AU SOL";
+                el.className = "status-indicator";
+            }
+        }
+
+        async function connect(side) {
+            try {
+                const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: nameT }],
+                    optionalServices: [SERVICE_UUID]
+                });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                
+                document.getElementById('btn' + side).style.display = 'none';
+
+                // Écoute de l'ÉTAT (0 ou 1)
+                const cEtat = await service.getCharacteristic(CHAR_ETAT);
+                await cEtat.startNotifications();
+                cEtat.addEventListener('characteristicvaluechanged', (e) => {
+                    let val = e.target.value.getUint32(0, true);
+                    processLogic(side, val);
+                });
+
+                // Écoute Accélération (Juste pour le visuel)
+                const cAcc = await service.getCharacteristic(CHAR_ACC);
+                await cAcc.startNotifications();
+                cAcc.addEventListener('characteristicvaluechanged', (e) => {
+                    let v = e.target.value.getFloat32(0, true);
+                    document.getElementById('acc' + side).innerText = v.toFixed(2);
+                });
+
+            } catch (err) { console.log(err); }
+        }
+    </script>
+</body>
+</html>
