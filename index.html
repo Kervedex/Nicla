@@ -3,32 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Dual Tracker - Performance</title>
+    <title>Nicla Dual Pro - Reset Control</title>
     <style>
         :root { --p: #007bff; --s: #28a745; --d: #dc3545; --gray: #6c757d; --dark: #212529; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        
-        .global-stats { 
-            background: var(--dark); color: white; width: 95%; max-width: 1200px; 
-            padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
+        .global-stats { background: var(--dark); color: white; width: 95%; max-width: 1200px; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .global-steps { font-size: 4rem; font-weight: 900; margin: 10px 0; color: var(--s); }
-        .reset-btn { background: var(--d); color: white; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-weight: bold; }
-
+        .reset-btn { background: var(--d); color: white; border: none; padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.2s; }
+        .reset-btn:active { transform: scale(0.95); }
         .main-container { display: flex; flex-direction: row; gap: 20px; width: 95%; max-width: 1200px; justify-content: center; flex-wrap: wrap; }
         .side-panel { flex: 1; min-width: 340px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-top: 8px solid var(--gray); }
         #panel-L { border-top-color: var(--p); }
         #panel-R { border-top-color: var(--d); }
-
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .card { background: #f8f9fa; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
         .card h3 { font-size: 0.7rem; margin: 0; color: #888; text-transform: uppercase; }
         .card p { font-size: 1.4rem; font-weight: 800; margin: 5px 0; }
-
         .batt-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-top: 8px; overflow: hidden; }
         .batt-fill { width: 0%; height: 100%; background: var(--s); transition: 0.5s; }
-
         .badge { padding: 12px; border-radius: 50px; font-weight: bold; color: white; background: var(--gray); margin-bottom: 15px; text-align: center; }
         .moving { background: var(--s) !important; }
         .conn-btn { width: 100%; padding: 15px; border-radius: 50px; border: none; background: #333; color: white; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
@@ -39,7 +31,7 @@
     <div class="global-stats">
         <h2>TOTAL PAS (GLOBAL)</h2>
         <div class="global-steps" id="totalGlobal">0</div>
-        <button class="reset-btn" id="resetBtn">RÉINITIALISER LES COMPTEURS</button>
+        <button class="reset-btn" id="resetBtn">RÉINITIALISER TOUT (HARDWARE)</button>
     </div>
     
     <div class="main-container">
@@ -50,13 +42,13 @@
             <div class="grid">
                 <div class="card" style="grid-column: span 2;">
                     <h3>Batterie</h3>
-                    <p id="battL">--V</p>
+                    <p id="battL">--%</p>
                     <div class="batt-container"><div id="barL" class="batt-fill"></div></div>
                 </div>
-                <div class="card"><h3>aTot</h3><p id="atotL">0.00</p></div>
-                <div class="card"><h3>Vitesse</h3><p id="vitL">0.0</p></div>
+                <div class="card"><h3>Accélération</h3><p id="atotL">0.00</p></div>
+                <div class="card"><h3>Vitesse</h3><p id="vitL">0.00</p></div>
                 <div class="card"><h3>Pas Session</h3><p id="pasSL">0</p></div>
-                <div class="card" style="border-bottom: 3px solid var(--p);"><h3>Pas Total</h3><p id="pasTL">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTL">0</p></div>
             </div>
         </div>
 
@@ -67,13 +59,13 @@
             <div class="grid">
                 <div class="card" style="grid-column: span 2;">
                     <h3>Batterie</h3>
-                    <p id="battR">--V</p>
+                    <p id="battR">--%</p>
                     <div class="batt-container"><div id="barR" class="batt-fill"></div></div>
                 </div>
-                <div class="card"><h3>aTot</h3><p id="atotR">0.00</p></div>
-                <div class="card"><h3>Vitesse</h3><p id="vitR">0.0</p></div>
+                <div class="card"><h3>Accélération</h3><p id="atotR">0.00</p></div>
+                <div class="card"><h3>Vitesse</h3><p id="vitR">0.00</p></div>
                 <div class="card"><h3>Pas Session</h3><p id="pasSR">0</p></div>
-                <div class="card" style="border-bottom: 3px solid var(--d);"><h3>Pas Total</h3><p id="pasTR">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTR">0</p></div>
             </div>
         </div>
     </div>
@@ -89,6 +81,8 @@
         };
 
         let stepsL = 0, stepsR = 0;
+        // Pour stocker les "tuyaux" d'écriture vers les Nicla
+        let connectedChars = { L: null, R: null };
 
         function updateGlobal() {
             document.getElementById('totalGlobal').innerText = stepsL + stepsR;
@@ -101,57 +95,45 @@
                     filters: [{ name: nameT }],
                     optionalServices: ["19b10000-0000-537e-4f6c-d104768a1214"]
                 });
-                
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
-                
                 document.getElementById('btn' + side).style.display = 'none';
-                const badge = document.getElementById('badge' + side);
-                badge.innerText = "À L'ARRÊT";
 
-                // Batterie + Jauge
-                const cB = await service.getCharacteristic(U.batt);
-                await cB.startNotifications();
-                cB.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = e.target.value.getFloat32(0, true);
-                    let pct = Math.round((v - 3.4) * 100 / (4.2 - 3.4));
-                    pct = Math.max(0, Math.min(100, pct));
-                    document.getElementById('batt' + side).innerText = pct + "% (" + v.toFixed(2) + "V)";
-                    document.getElementById('bar' + side).style.width = pct + "%";
-                });
+                // On sauvegarde la caractéristique "Pas Totaux" pour pouvoir écrire dessus plus tard
+                connectedChars[side] = await service.getCharacteristic(U.pasT);
 
-                // Etat
-                const cE = await service.getCharacteristic(U.etat);
-                await cE.startNotifications();
-                cE.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = e.target.value.getUint32(0, true);
-                    badge.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
-                    v == 1 ? badge.classList.add('moving') : badge.classList.remove('moving');
-                });
-
-                // Pas Totaux
-                const cT = await service.getCharacteristic(U.pasT);
-                await cT.startNotifications();
-                cT.addEventListener('characteristicvaluechanged', (e) => {
-                    let v = e.target.value.getUint32(0, true);
-                    if (side === 'L') stepsL = v; else stepsR = v;
-                    document.getElementById('pasT' + side).innerText = v;
-                    updateGlobal();
-                });
-
-                // Helper pour Vitesse, Atot, Pas Session
                 const listen = async (uuid, htmlId, isFloat) => {
                     const c = await service.getCharacteristic(uuid);
                     await c.startNotifications();
                     c.addEventListener('characteristicvaluechanged', (e) => {
-                        let val = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
-                        document.getElementById(htmlId + side).innerText = val;
+                        let v = isFloat ? e.target.value.getFloat32(0, true).toFixed(2) : e.target.value.getUint32(0, true);
+                        
+                        if (uuid === U.etat) {
+                            const b = document.getElementById('badge' + side);
+                            b.innerText = v == 1 ? "EN MARCHE" : "À L'ARRÊT";
+                            v == 1 ? b.classList.add('moving') : b.classList.remove('moving');
+                        } else if (uuid === U.batt) {
+                            let pct = Math.round((v - 3.4) * 100 / (4.2 - 3.4));
+                            pct = Math.max(0, Math.min(100, pct));
+                            document.getElementById('batt' + side).innerText = pct + "% (" + parseFloat(v).toFixed(2) + "V)";
+                            document.getElementById('bar' + side).style.width = pct + "%";
+                        } else {
+                            document.getElementById(htmlId + side).innerText = v;
+                            if (uuid === U.pasT) {
+                                if (side === 'L') stepsL = parseInt(v); else stepsR = parseInt(v);
+                                updateGlobal();
+                            }
+                        }
                     });
                 };
 
+                listen(U.etat, 'badge', false);
+                listen(U.batt, 'batt', true);
                 listen(U.vit, 'vit', true);
                 listen(U.atot, 'atot', true);
                 listen(U.pasS, 'pasS', false);
+                // On lance aussi l'écoute normale sur les pas totaux
+                listen(U.pasT, 'pasT', false);
 
             } catch (err) { console.log(err); }
         }
@@ -159,11 +141,31 @@
         document.getElementById('btnL').onclick = () => connectNicla('L');
         document.getElementById('btnR').onclick = () => connectNicla('R');
 
-        document.getElementById('resetBtn').onclick = () => {
+        // --- LOGIQUE DU BOUTON RESET ---
+        document.getElementById('resetBtn').onclick = async () => {
+            // 1. Reset visuel
             stepsL = 0; stepsR = 0;
-            const ids = ['pasTL', 'pasTR', 'pasSL', 'pasSR', 'vitL', 'vitR'];
-            ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerText = "0"; });
             updateGlobal();
+            const ids = ['pasTL', 'pasTR', 'pasSL', 'pasSR', 'vitL', 'vitR', 'atotL', 'atotR'];
+            ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerText = "0"; });
+
+            // 2. Envoi de l'ordre RESET (valeur 0) aux Nicla via Bluetooth
+            // On prépare un buffer de 4 octets contenant "0" (Uint32)
+            const resetValue = new Uint32Array([0]);
+            
+            try {
+                if (connectedChars.L) {
+                    await connectedChars.L.writeValue(resetValue);
+                    console.log("Reset envoyé à Gauche");
+                }
+                if (connectedChars.R) {
+                    await connectedChars.R.writeValue(resetValue);
+                    console.log("Reset envoyé à Droite");
+                }
+            } catch (e) {
+                console.log("Erreur lors du reset : " + e);
+                alert("Erreur: Vérifiez que les Nicla sont bien connectées !");
+            }
         };
     </script>
 </body>
