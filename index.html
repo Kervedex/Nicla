@@ -99,17 +99,17 @@
 </div>
 
 <script>
-    // --- UUIDs (Doivent correspondre EXACTEMENT au code Arduino) ---
+    // --- CORRECTION UUIDs (TOUT EN MINUSCULE) ---
     const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
     const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
     const CHAR_PAS_TOTAL_UUID   = "19b10000-1002-537e-4f6c-d104768a1214";
-    const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4F6C-d104768a1214";
+    const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214"; // Minuscules corrigées ici
     const CHAR_BATTERY_UUID     = "19b10000-1004-537e-4f6c-d104768a1214";
     const CHAR_ACCEL_UUID       = "19b10000-1005-537e-4f6c-d104768a1214";
     const CHAR_ETAT_UUID        = "19b10000-1006-537e-4f6c-d104768a1214";
 
     let device, server, service;
-    let charPasSession; 
+    let charPasSession = null; 
 
     // --- CONFIG GRAPHIQUE ---
     const ctx = document.getElementById('accelChart').getContext('2d');
@@ -121,9 +121,11 @@
                 label: 'Accélération Horizontale (g)',
                 data: Array(50).fill(0),
                 borderColor: '#00d2ff',
+                backgroundColor: 'rgba(0, 210, 255, 0.1)',
                 borderWidth: 2,
                 tension: 0.3,
-                pointRadius: 0
+                pointRadius: 0,
+                fill: true
             }]
         },
         options: {
@@ -141,8 +143,9 @@
     async function connectToNicla() {
         try {
             console.log('Recherche...');
+            // Filtre par nom exact (correspond à Arduino)
             device = await navigator.bluetooth.requestDevice({
-                filters: [{ name: 'NiclaL' }], // <<< Assure-toi que c'est le même nom que dans Arduino
+                filters: [{ name: 'NiclaL' }], 
                 optionalServices: [SERVICE_UUID]
             });
 
@@ -150,8 +153,8 @@
             server = await device.gatt.connect();
             service = await server.getPrimaryService(SERVICE_UUID);
 
-            // --- LIAISON DES CARACTERISTIQUES ---
-            
+            console.log("Service trouvé, connexion aux caractéristiques...");
+
             // 1. Pas Session
             charPasSession = await service.getCharacteristic(CHAR_PAS_SESSION_UUID);
             await charPasSession.startNotifications();
@@ -175,7 +178,7 @@
                 document.getElementById('valSpeed').innerText = v;
             });
 
-            // 4. Accélération (Mise à jour du graph)
+            // 4. Accélération
             const charAccel = await service.getCharacteristic(CHAR_ACCEL_UUID);
             await charAccel.startNotifications();
             charAccel.addEventListener('characteristicvaluechanged', (event) => {
@@ -184,7 +187,7 @@
                 updateChart(a);
             });
 
-            // 5. État (0, 1, 2, 3)
+            // 5. État
             const charEtat = await service.getCharacteristic(CHAR_ETAT_UUID);
             await charEtat.startNotifications();
             charEtat.addEventListener('characteristicvaluechanged', (event) => {
@@ -206,21 +209,20 @@
         } catch (error) {
             console.error(error);
             alert("Erreur de connexion : " + error);
+            document.getElementById('connectionStatus').innerText = "Erreur";
         }
     }
 
-    // Fonction de Reset (Envoie '1' au service de pas)
     async function resetData() {
         if (!charPasSession) return;
-        let resetVal = Uint32Array.of(1); // N'importe quelle valeur déclenche le if(written)
+        let resetVal = Uint32Array.of(1); 
         await charPasSession.writeValue(resetVal);
-        // Reset visuel
         document.getElementById('valSteps').innerText = "0";
         document.getElementById('valTotal').innerText = "0";
+        document.getElementById('valSpeed').innerText = "0.0";
         updateStateUI(0);
     }
 
-    // Mise à jour du graph en temps réel
     function updateChart(newVal) {
         const data = accelChart.data.datasets[0].data;
         data.shift();
@@ -228,25 +230,30 @@
         accelChart.update();
     }
 
-    // Mise à jour de l'UI État
     function updateStateUI(stateCode) {
         const el = document.getElementById('activityState');
+        const box = document.querySelector('.status-box');
+        
         switch(stateCode) {
             case 0: 
                 el.innerText = "REPOS / SOL"; 
                 el.style.color = "#888"; 
+                box.style.border = "none";
                 break;
             case 1: 
                 el.innerText = "MARCHE"; 
-                el.style.color = "#2ed573"; // Vert
+                el.style.color = "#2ed573"; 
+                box.style.border = "1px solid #2ed573";
                 break;
             case 2: 
                 el.innerText = "COURSE"; 
-                el.style.color = "#ffa502"; // Orange
+                el.style.color = "#ffa502"; 
+                box.style.border = "1px solid #ffa502";
                 break;
             case 3: 
                 el.innerText = "SPRINT"; 
-                el.style.color = "#ff4757"; // Rouge
+                el.style.color = "#ff4757"; 
+                box.style.border = "1px solid #ff4757";
                 break;
         }
     }
