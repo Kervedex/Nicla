@@ -102,3 +102,120 @@
                 <div class="card"><h3>Accél.</h3><p id="accR">0.00</p></div>
                 <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battR">--%</p><div class="batt-bar"><div id="barR" class="batt-fill"></div></div></div>
             </div>
+        </div>
+    </div>
+
+    <script>
+        const UUID = {
+            pasS: "19b10000-1001-537e-4f6c-d104768a1214",
+            pasT: "19b10000-1002-537e-4f6c-d104768a1214",
+            vit:  "19b10000-1003-537e-4f6c-d104768a1214",
+            batt: "19b10000-1004-537e-4f6c-d104768a1214",
+            acc:  "19b10000-1005-537e-4f6c-d104768a1214",
+            etat: "19b10000-1006-537e-4f6c-d104768a1214"
+        };
+
+        let stateL = 0, stateR = 0, smartSteps = 0;
+        let writers = { L: null, R: null };
+
+        function updateGlobalStatus() {
+            const el = document.getElementById('globalStatus');
+            const sys = document.getElementById('sysState');
+            let maxState = Math.max(stateL, stateR);
+
+            el.className = "global-status-badge"; 
+
+            if (maxState === 3) {
+                el.innerText = "SPRINT ⚡"; el.classList.add('bg-sprint'); sys.innerText = "Performance";
+            } else if (maxState === 2) {
+                el.innerText = "COURSE"; el.classList.add('bg-run'); sys.innerText = "Endurance";
+            } else if (maxState === 1) {
+                el.innerText = "MARCHE"; el.classList.add('bg-walk'); sys.innerText = "Activité";
+            } else {
+                el.innerText = "ARRÊT"; el.style.background = "#333"; el.style.color = "#777"; sys.innerText = "Repos";
+            }
+        }
+
+        function updateLocalStatus(side, s) {
+            const el = document.getElementById('localStat' + side);
+            if (s === 0) { el.innerText = "SOL"; el.style.background="#eee"; el.style.color="#999"; }
+            if (s >= 1) { el.innerText = "EN L'AIR"; el.style.background="var(--p)"; el.style.color="white"; }
+        }
+
+        function processGait(side, newState) {
+            // Logique de validation croisée (Gait Analysis)
+            if (newState === 0) { // Un pied atterrit
+                let oldState = (side === 'L') ? stateL : stateR;
+                let otherState = (side === 'L') ? stateR : stateL;
+                
+                // Si ce pied était en l'air ET que l'autre est au sol
+                // (Validation biomécanique d'un vrai pas)
+                if (oldState > 0 && otherState === 0) {
+                    smartSteps++;
+                    document.getElementById('smartSteps').innerText = smartSteps;
+                }
+            }
+            if (side === 'L') stateL = newState; else stateR = newState;
+            updateLocalStatus(side, newState);
+            updateGlobalStatus();
+        }
+
+        async function connect(side) {
+            const btn = document.getElementById('btn' + side);
+            btn.innerText = "Recherche..."; 
+            btn.disabled = true;
+
+            try {
+                const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
+                const device = await navigator.bluetooth.requestDevice({ 
+                    filters: [{ name: nameT }], 
+                    optionalServices: ["19b10000-0000-537e-4f6c-d104768a1214"] 
+                });
+                
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
+                
+                btn.style.display = 'none'; // Succès !
+                writers[side] = await service.getCharacteristic(UUID.pasS);
+
+                const listen = async (uuid, cb) => {
+                    const c = await service.getCharacteristic(uuid);
+                    await c.startNotifications();
+                    c.addEventListener('characteristicvaluechanged', cb);
+                };
+
+                listen(UUID.etat, (e) => processGait(side, e.target.value.getUint32(0, true)));
+                listen(UUID.pasS, (e) => document.getElementById('pasS'+side).innerText = e.target.value.getUint32(0,true));
+                listen(UUID.pasT, (e) => document.getElementById('pasT'+side).innerText = e.target.value.getUint32(0,true));
+                listen(UUID.vit,  (e) => document.getElementById('vit'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
+                listen(UUID.acc,  (e) => document.getElementById('acc'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
+                listen(UUID.batt, (e) => {
+                    let v = e.target.value.getFloat32(0, true);
+                    let pct = Math.max(0, Math.min(100, Math.round((v - 3.5) * 100 / (4.2 - 3.5))));
+                    document.getElementById('batt'+side).innerText = pct + "%";
+                    document.getElementById('bar'+side).style.width = pct + "%";
+                });
+
+            } catch (err) { 
+                console.error(err); 
+                btn.innerText = "Réessayer"; btn.disabled = false;
+                alert("Erreur connexion : " + err); 
+            }
+        }
+
+        document.getElementById('btnReset').onclick = async () => {
+            smartSteps = 0; document.getElementById('smartSteps').innerText = "0";
+            const payload = new Uint32Array([0]);
+            try {
+                if(writers.L) await writers.L.writeValue(payload);
+                if(writers.R) await writers.R.writeValue(payload);
+            } catch(e) {}
+            ['pasS','pasT','vit','acc'].forEach(p => {
+                if(document.getElementById(p+'L')) document.getElementById(p+'L').innerText = "0";
+                if(document.getElementById(p+'R')) document.getElementById(p+'R').innerText = "0";
+            });
+            updateGlobalStatus();
+        };
+    </script>
+</body>
+</html>
