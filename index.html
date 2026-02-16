@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Pro Dashboard - Stable</title>
+    <title>Nicla Pro - Tracker Performance</title>
     <style>
         :root { --p: #007bff; --s: #28a745; --d: #dc3545; --w: #ffc107; --purp: #6f42c1; --gray: #6c757d; --dark: #212529; }
         body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
         
-        /* HEADER GLOBAL */
+        /* HEADER */
         .global-stats { 
             background: var(--dark); color: white; width: 95%; max-width: 1100px; 
             padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
@@ -27,9 +27,9 @@
         .global-steps { font-size: 3.5rem; font-weight: 900; line-height: 1; color: var(--s); }
         .sub-text { font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
         
-        .reset-btn { grid-column: span 2; background: var(--d); color: white; border: none; padding: 12px; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 50%; margin-left: auto; margin-right: auto;}
+        .reset-btn { grid-column: span 2; background: var(--d); color: white; border: none; padding: 12px; border-radius: 50px; cursor: pointer; font-weight: bold; width: 50%; margin: 10px auto; }
 
-        /* PANNEAUX PIEDS */
+        /* PIEDS */
         .container { display: flex; gap: 15px; width: 100%; max-width: 1100px; justify-content: center; flex-wrap: wrap; }
         .foot-panel { 
             flex: 1; min-width: 340px; background: white; padding: 20px; border-radius: 20px; 
@@ -44,20 +44,17 @@
             padding: 5px 10px; border-radius: 5px; background: #eee; color: #999;
         }
 
-        /* GRILLE DE DATA */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .card { background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
         .card h3 { font-size: 0.7rem; margin: 0; color: #888; text-transform: uppercase; }
         .card p { font-size: 1.4rem; font-weight: 800; margin: 2px 0; color: #333; }
-        .card-highlight { background: #e3f2fd; border-color: #bbdefb; } 
-
+        
         .batt-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top:5px; }
         .batt-fill { height: 100%; width: 0%; background: var(--s); transition: 0.5s; }
-
         button.conn { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
         
-        .bg-walk { background: var(--s) !important; color: white !important; }
-        .bg-run { background: var(--w) !important; color: #333 !important; }
+        .bg-walk   { background: var(--s) !important; color: white !important; }
+        .bg-run    { background: var(--w) !important; color: #333 !important; }
         .bg-sprint { background: var(--purp) !important; color: white !important; }
 
     </style>
@@ -65,7 +62,7 @@
 <body>
 
     <div class="global-stats">
-        <div id="globalStatus" class="global-status-badge">ARRÊT COMPLET</div>
+        <div id="globalStatus" class="global-status-badge">PRÊT</div>
         
         <div class="count-box">
             <div class="sub-text">Pas Confirmés (Global)</div>
@@ -73,11 +70,11 @@
         </div>
         
         <div class="count-box">
-            <div class="sub-text">État Système</div>
-            <div style="font-size:1.5rem; font-weight:bold; margin-top:10px" id="sysState">Prêt</div>
+            <div class="sub-text">Type Mouvement</div>
+            <div style="font-size:1.5rem; font-weight:bold; margin-top:10px" id="sysState">--</div>
         </div>
 
-        <button class="reset-btn" id="btnReset">RESET TOUS LES COMPTEURS</button>
+        <button class="reset-btn" id="btnReset">RESET TOUT</button>
     </div>
 
     <div class="container">
@@ -86,8 +83,8 @@
             <div id="localStatL" class="local-status">SOL</div>
             <button class="conn" id="btnL" onclick="connect('L')">Connecter Gauche</button>
             <div class="grid">
-                <div class="card card-highlight"><h3>Pas Session</h3><p id="pasSL">0</p></div>
-                <div class="card card-highlight"><h3>Pas Total</h3><p id="pasTL">0</p></div>
+                <div class="card"><h3>Pas Session</h3><p id="pasSL">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTL">0</p></div>
                 <div class="card"><h3>Vitesse</h3><p id="vitL">0.00</p></div>
                 <div class="card"><h3>Accél.</h3><p id="accL">0.00</p></div>
                 <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battL">--%</p><div class="batt-bar"><div id="barL" class="batt-fill"></div></div></div>
@@ -97,118 +94,11 @@
         <div class="foot-panel" id="panel-R">
             <h2 style="color:var(--d); margin-top:0;">DROITE</h2>
             <div id="localStatR" class="local-status">SOL</div>
-            <button class="conn" id="btnR" onclick="connect('R')">Connecter Droit</button>
+            <button class="conn" id="btnR" onclick="connect('R')">Connecter Droite</button>
             <div class="grid">
-                <div class="card card-highlight"><h3>Pas Session</h3><p id="pasSR">0</p></div>
-                <div class="card card-highlight"><h3>Pas Total</h3><p id="pasTR">0</p></div>
+                <div class="card"><h3>Pas Session</h3><p id="pasSR">0</p></div>
+                <div class="card"><h3>Pas Total</h3><p id="pasTR">0</p></div>
                 <div class="card"><h3>Vitesse</h3><p id="vitR">0.00</p></div>
                 <div class="card"><h3>Accél.</h3><p id="accR">0.00</p></div>
                 <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battR">--%</p><div class="batt-bar"><div id="barR" class="batt-fill"></div></div></div>
             </div>
-        </div>
-    </div>
-
-    <script>
-        const UUID = {
-            pasS: "19b10000-1001-537e-4f6c-d104768a1214",
-            pasT: "19b10000-1002-537e-4f6c-d104768a1214",
-            vit:  "19b10000-1003-537e-4f6c-d104768a1214",
-            batt: "19b10000-1004-537e-4f6c-d104768a1214",
-            acc:  "19b10000-1005-537e-4f6c-d104768a1214",
-            etat: "19b10000-1006-537e-4f6c-d104768a1214"
-        };
-
-        let stateL = 0, stateR = 0, smartSteps = 0;
-        let writers = { L: null, R: null };
-
-        function updateGlobalStatus() {
-            const el = document.getElementById('globalStatus');
-            const sys = document.getElementById('sysState');
-            let maxState = Math.max(stateL, stateR);
-
-            el.className = "global-status-badge"; 
-
-            if (maxState === 3) {
-                el.innerText = "SPRINT ⚡"; el.classList.add('bg-sprint'); sys.innerText = "Performance Max";
-            } else if (maxState === 2) {
-                el.innerText = "COURSE"; el.classList.add('bg-run'); sys.innerText = "Endurance";
-            } else if (maxState === 1) {
-                el.innerText = "MARCHE"; el.classList.add('bg-walk'); sys.innerText = "Activité";
-            } else {
-                el.innerText = "ARRÊT COMPLET"; el.style.background = "#333"; el.style.color = "#777"; sys.innerText = "Repos";
-            }
-        }
-
-        function updateLocalStatus(side, s) {
-            const el = document.getElementById('localStat' + side);
-            if (s === 0) { el.innerText = "SOL"; el.style.background="#eee"; el.style.color="#999"; }
-            if (s >= 1) { el.innerText = "EN L'AIR"; el.style.background="var(--p)"; el.style.color="white"; }
-        }
-
-        function processGait(side, newState) {
-            // Logique de validation croisée (Gait Analysis)
-            if (newState === 0) { // Un pied atterrit
-                let oldState = (side === 'L') ? stateL : stateR;
-                let otherState = (side === 'L') ? stateR : stateL;
-                
-                // Si ce pied était en l'air ET que l'autre est au sol
-                // (C'est la définition biomécanique d'un pas validé)
-                if (oldState > 0 && otherState === 0) {
-                    smartSteps++;
-                    document.getElementById('smartSteps').innerText = smartSteps;
-                }
-            }
-            
-            if (side === 'L') stateL = newState; else stateR = newState;
-            updateLocalStatus(side, newState);
-            updateGlobalStatus();
-        }
-
-        async function connect(side) {
-            try {
-                const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
-                const device = await navigator.bluetooth.requestDevice({ 
-                    filters: [{ name: nameT }], 
-                    optionalServices: ["19b10000-0000-537e-4f6c-d104768a1214"] 
-                });
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
-                
-                document.getElementById('btn' + side).style.display = 'none';
-                writers[side] = await service.getCharacteristic(UUID.pasS); 
-
-                const listen = async (uuid, cb) => {
-                    const c = await service.getCharacteristic(uuid);
-                    await c.startNotifications();
-                    c.addEventListener('characteristicvaluechanged', cb);
-                };
-
-                listen(UUID.etat, (e) => processGait(side, e.target.value.getUint32(0, true)));
-                listen(UUID.pasS, (e) => document.getElementById('pasS'+side).innerText = e.target.value.getUint32(0,true));
-                listen(UUID.pasT, (e) => document.getElementById('pasT'+side).innerText = e.target.value.getUint32(0,true));
-                listen(UUID.vit,  (e) => document.getElementById('vit'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
-                listen(UUID.acc,  (e) => document.getElementById('acc'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
-                listen(UUID.batt, (e) => {
-                    let v = e.target.value.getFloat32(0, true);
-                    let pct = Math.max(0, Math.min(100, Math.round((v - 3.5) * 100 / (4.2 - 3.5))));
-                    document.getElementById('batt'+side).innerText = pct + "%";
-                    document.getElementById('bar'+side).style.width = pct + "%";
-                });
-
-            } catch (err) { console.error(err); alert("Erreur connexion " + side); }
-        }
-
-        document.getElementById('btnReset').onclick = async () => {
-            smartSteps = 0; document.getElementById('smartSteps').innerText = "0";
-            const payload = new Uint32Array([0]);
-            if(writers.L) await writers.L.writeValue(payload);
-            if(writers.R) await writers.R.writeValue(payload);
-            ['pasS','pasT','vit','acc'].forEach(p => {
-                if(document.getElementById(p+'L')) document.getElementById(p+'L').innerText = "0";
-                if(document.getElementById(p+'R')) document.getElementById(p+'R').innerText = "0";
-            });
-            updateGlobalStatus();
-        };
-    </script>
-</body>
-</html>
