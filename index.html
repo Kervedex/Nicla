@@ -6,10 +6,10 @@
     <title>Nicla Sense - Master Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- DESIGN CLASSIQUE --- */
+        /* --- DESIGN CLASSIQUE (V3/V6) --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
         
-        /* Conteneur centré classique */
+        /* Conteneur centré */
         .container { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
         
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -40,7 +40,7 @@
         .value { font-size: 24px; font-weight: bold; }
         .unit { font-size: 11px; color: #666; }
 
-        /* --- BATTERIE HYBRIDE (Barre + Texte) --- */
+        /* --- BATTERIE HYBRIDE --- */
         .battery-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;}
         .battery-shell {
             width: 35px; height: 16px; border: 2px solid #777; border-radius: 4px; padding: 1px; position: relative;
@@ -57,7 +57,7 @@
             background-color: #1e1e1e; 
             padding: 15px; 
             border-radius: 10px; 
-            height: 450px; /* Plus grand en hauteur */
+            height: 450px; 
         }
 
         /* --- CONTROL BAR --- */
@@ -178,7 +178,7 @@
 
     let charControlL = null, charControlR = null;
 
-    // --- CONFIG GRAPHIQUE (0 - 100 m/s²) ---
+    // --- CONFIG GRAPHIQUE (0 - 50 m/s²) ---
     const ctx = document.getElementById('dualChart').getContext('2d');
     const dualChart = new Chart(ctx, {
         type: 'line',
@@ -212,7 +212,7 @@
             scales: {
                 y: { 
                     min: 0, 
-                    max: 100, // Echelle fixe demandée
+                    max: 50, // Echelle fixe modifiée à 50
                     grid: { color: '#333' } 
                 },
                 x: { display: false }
@@ -238,9 +238,9 @@
             setupChar(service, CHAR_PAS_SESSION_UUID, (v) => document.getElementById('steps' + side).innerText = v.getUint32(0, true));
             setupChar(service, CHAR_VITESSE_UUID, (v) => document.getElementById('speed' + side).innerText = v.getFloat32(0, true).toFixed(1));
             
-            // --- CORRECTION : PAS DE MULTIPLICATION PAR 9.81 ---
+            // Pas de conversion (Valeur brute)
             setupChar(service, CHAR_ACCEL_UUID, (v) => {
-                let valMps2 = v.getFloat32(0, true); // Déjà en m/s² depuis Arduino
+                let valMps2 = v.getFloat32(0, true); 
                 document.getElementById('accel' + side).innerText = valMps2.toFixed(1);
                 updateChart(side, valMps2);
             });
