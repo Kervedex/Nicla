@@ -1,4 +1,13 @@
 <script>
+        // --- TEST DE COMPATIBILITÉ AU DÉMARRAGE ---
+        window.onload = function() {
+            if (!navigator.bluetooth) {
+                alert("ATTENTION : Ton navigateur ne supporte pas le Web Bluetooth !\nUtilise Chrome ou Edge sur PC/Android.\n(Pas de Firefox, pas de Safari/iPhone).");
+                return;
+            }
+            console.log("Système Bluetooth détecté et prêt.");
+        };
+
         const UUID = {
             pasS: "19b10000-1001-537e-4f6c-d104768a1214",
             pasT: "19b10000-1002-537e-4f6c-d104768a1214",
@@ -15,7 +24,6 @@
             const el = document.getElementById('globalStatus');
             const sys = document.getElementById('sysState');
             let maxState = Math.max(stateL, stateR);
-
             el.className = "global-status-badge"; 
 
             if (maxState === 3) {
@@ -50,26 +58,22 @@
         }
 
         async function connect(side) {
-            const btn = document.getElementById('btn' + side);
-            
-            // 1. On change le texte pour montrer qu'il se passe quelque chose
-            btn.innerText = "Recherche...";
-            btn.disabled = true; // On évite de cliquer 2 fois
+            // DIAGNOSTIC CLIC
+            alert("Bouton cliqué pour : " + side + "\nJe lance la recherche...");
 
             try {
                 const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
                 
-                // Demande à l'utilisateur
                 const device = await navigator.bluetooth.requestDevice({ 
                     filters: [{ name: nameT }], 
                     optionalServices: ["19b10000-0000-537e-4f6c-d104768a1214"] 
                 });
 
+                alert("Appareil trouvé ! Connexion en cours...");
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
                 
-                // SI ON ARRIVE ICI, C'EST GAGNÉ
-                btn.style.display = 'none'; // On cache le bouton seulement maintenant
+                document.getElementById('btn' + side).style.display = 'none';
                 writers[side] = await service.getCharacteristic(UUID.pasS); 
 
                 const listen = async (uuid, cb) => {
@@ -83,6 +87,8 @@
                 listen(UUID.pasT, (e) => document.getElementById('pasT'+side).innerText = e.target.value.getUint32(0,true));
                 listen(UUID.vit,  (e) => document.getElementById('vit'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
                 listen(UUID.acc,  (e) => document.getElementById('acc'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
+                
+                // BATTERIE
                 listen(UUID.batt, (e) => {
                     let v = e.target.value.getFloat32(0, true);
                     let pct = Math.max(0, Math.min(100, Math.round((v - 3.5) * 100 / (4.2 - 3.5))));
@@ -90,27 +96,20 @@
                     document.getElementById('bar'+side).style.width = pct + "%";
                 });
 
+                alert("Connexion RÉUSSIE pour " + side + " !");
+
             } catch (err) { 
+                // DIAGNOSTIC ERREUR
                 console.error(err); 
-                // En cas d'erreur ou d'annulation, on réactive le bouton
-                btn.innerText = "Réessayer " + (side==='L'?'Gauche':'Droite');
-                btn.disabled = false;
-                alert("Erreur: " + err); 
+                alert("ERREUR : " + err + "\n\nAstuce : Vérifie que le Nicla est allumé et que tu es bien en HTTPS ou Localhost."); 
             }
         }
 
         document.getElementById('btnReset').onclick = async () => {
             smartSteps = 0; document.getElementById('smartSteps').innerText = "0";
             const payload = new Uint32Array([0]);
-            try {
-                if(writers.L) await writers.L.writeValue(payload);
-                if(writers.R) await writers.R.writeValue(payload);
-            } catch(e) { console.log("Pas connecté pour reset"); }
-            
-            ['pasS','pasT','vit','acc'].forEach(p => {
-                if(document.getElementById(p+'L')) document.getElementById(p+'L').innerText = "0";
-                if(document.getElementById(p+'R')) document.getElementById(p+'R').innerText = "0";
-            });
+            if(writers.L) await writers.L.writeValue(payload);
+            if(writers.R) await writers.R.writeValue(payload);
             updateGlobalStatus();
         };
     </script>
