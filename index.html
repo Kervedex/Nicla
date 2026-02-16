@@ -1,114 +1,4 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Pro Dashboard - Stable</title>
-    <style>
-        :root { --p: #007bff; --s: #28a745; --d: #dc3545; --w: #ffc107; --purp: #6f42c1; --gray: #6c757d; --dark: #212529; }
-        body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        
-        /* HEADER GLOBAL */
-        .global-stats { 
-            background: var(--dark); color: white; width: 95%; max-width: 1100px; 
-            padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 20px;
-        }
-        
-        .global-status-badge {
-            grid-column: span 2;
-            font-size: 2rem; font-weight: 900; padding: 15px; border-radius: 15px;
-            background: #333; color: #777; letter-spacing: 2px; text-transform: uppercase;
-            transition: 0.3s;
-        }
-
-        .count-box { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; }
-        .global-steps { font-size: 3.5rem; font-weight: 900; line-height: 1; color: var(--s); }
-        .sub-text { font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .reset-btn { grid-column: span 2; background: var(--d); color: white; border: none; padding: 12px; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 50%; margin-left: auto; margin-right: auto;}
-
-        /* PANNEAUX PIEDS */
-        .container { display: flex; gap: 15px; width: 100%; max-width: 1100px; justify-content: center; flex-wrap: wrap; }
-        .foot-panel { 
-            flex: 1; min-width: 340px; background: white; padding: 20px; border-radius: 20px; 
-            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
-            border-top: 10px solid var(--gray); position: relative;
-        }
-        #panel-L { border-top-color: var(--p); }
-        #panel-R { border-top-color: var(--d); }
-
-        .local-status {
-            position: absolute; top: 20px; right: 20px; font-weight: bold; font-size: 0.8rem;
-            padding: 5px 10px; border-radius: 5px; background: #eee; color: #999;
-        }
-
-        /* GRILLE DE DATA */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .card { background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
-        .card h3 { font-size: 0.7rem; margin: 0; color: #888; text-transform: uppercase; }
-        .card p { font-size: 1.4rem; font-weight: 800; margin: 2px 0; color: #333; }
-        .card-highlight { background: #e3f2fd; border-color: #bbdefb; } 
-
-        .batt-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top:5px; }
-        .batt-fill { height: 100%; width: 0%; background: var(--s); transition: 0.5s; }
-
-        button.conn { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
-        
-        .bg-walk { background: var(--s) !important; color: white !important; }
-        .bg-run { background: var(--w) !important; color: #333 !important; }
-        .bg-sprint { background: var(--purp) !important; color: white !important; }
-
-    </style>
-</head>
-<body>
-
-    <div class="global-stats">
-        <div id="globalStatus" class="global-status-badge">ARRÊT COMPLET</div>
-        
-        <div class="count-box">
-            <div class="sub-text">Pas Confirmés (Global)</div>
-            <div class="global-steps" id="smartSteps">0</div>
-        </div>
-        
-        <div class="count-box">
-            <div class="sub-text">État Système</div>
-            <div style="font-size:1.5rem; font-weight:bold; margin-top:10px" id="sysState">Prêt</div>
-        </div>
-
-        <button class="reset-btn" id="btnReset">RESET TOUS LES COMPTEURS</button>
-    </div>
-
-    <div class="container">
-        <div class="foot-panel" id="panel-L">
-            <h2 style="color:var(--p); margin-top:0;">GAUCHE</h2>
-            <div id="localStatL" class="local-status">SOL</div>
-            <button class="conn" id="btnL" onclick="connect('L')">Connecter Gauche</button>
-            <div class="grid">
-                <div class="card card-highlight"><h3>Pas Session</h3><p id="pasSL">0</p></div>
-                <div class="card card-highlight"><h3>Pas Total</h3><p id="pasTL">0</p></div>
-                <div class="card"><h3>Vitesse</h3><p id="vitL">0.00</p></div>
-                <div class="card"><h3>Accél.</h3><p id="accL">0.00</p></div>
-                <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battL">--%</p><div class="batt-bar"><div id="barL" class="batt-fill"></div></div></div>
-            </div>
-        </div>
-
-        <div class="foot-panel" id="panel-R">
-            <h2 style="color:var(--d); margin-top:0;">DROITE</h2>
-            <div id="localStatR" class="local-status">SOL</div>
-            <button class="conn" id="btnR" onclick="connect('R')">Connecter Droit</button>
-            <div class="grid">
-                <div class="card card-highlight"><h3>Pas Session</h3><p id="pasSR">0</p></div>
-                <div class="card card-highlight"><h3>Pas Total</h3><p id="pasTR">0</p></div>
-                <div class="card"><h3>Vitesse</h3><p id="vitR">0.00</p></div>
-                <div class="card"><h3>Accél.</h3><p id="accR">0.00</p></div>
-                <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battR">--%</p><div class="batt-bar"><div id="barR" class="batt-fill"></div></div></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
+<script>
         const UUID = {
             pasS: "19b10000-1001-537e-4f6c-d104768a1214",
             pasT: "19b10000-1002-537e-4f6c-d104768a1214",
@@ -146,35 +36,40 @@
         }
 
         function processGait(side, newState) {
-            // Logique de validation croisée (Gait Analysis)
-            if (newState === 0) { // Un pied atterrit
+            if (newState === 0) { 
                 let oldState = (side === 'L') ? stateL : stateR;
                 let otherState = (side === 'L') ? stateR : stateL;
-                
-                // Si ce pied était en l'air ET que l'autre est au sol
-                // (C'est la définition biomécanique d'un pas validé)
                 if (oldState > 0 && otherState === 0) {
                     smartSteps++;
                     document.getElementById('smartSteps').innerText = smartSteps;
                 }
             }
-            
             if (side === 'L') stateL = newState; else stateR = newState;
             updateLocalStatus(side, newState);
             updateGlobalStatus();
         }
 
         async function connect(side) {
+            const btn = document.getElementById('btn' + side);
+            
+            // 1. On change le texte pour montrer qu'il se passe quelque chose
+            btn.innerText = "Recherche...";
+            btn.disabled = true; // On évite de cliquer 2 fois
+
             try {
                 const nameT = side === 'L' ? 'NiclaL' : 'NiclaR';
+                
+                // Demande à l'utilisateur
                 const device = await navigator.bluetooth.requestDevice({ 
                     filters: [{ name: nameT }], 
                     optionalServices: ["19b10000-0000-537e-4f6c-d104768a1214"] 
                 });
+
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService("19b10000-0000-537e-4f6c-d104768a1214");
                 
-                document.getElementById('btn' + side).style.display = 'none';
+                // SI ON ARRIVE ICI, C'EST GAGNÉ
+                btn.style.display = 'none'; // On cache le bouton seulement maintenant
                 writers[side] = await service.getCharacteristic(UUID.pasS); 
 
                 const listen = async (uuid, cb) => {
@@ -195,7 +90,27 @@
                     document.getElementById('bar'+side).style.width = pct + "%";
                 });
 
-            } catch (err) { console.error(err); alert("Erreur connexion " + side); }
+            } catch (err) { 
+                console.error(err); 
+                // En cas d'erreur ou d'annulation, on réactive le bouton
+                btn.innerText = "Réessayer " + (side==='L'?'Gauche':'Droite');
+                btn.disabled = false;
+                alert("Erreur: " + err); 
+            }
         }
 
         document.getElementById('btnReset').onclick = async () => {
+            smartSteps = 0; document.getElementById('smartSteps').innerText = "0";
+            const payload = new Uint32Array([0]);
+            try {
+                if(writers.L) await writers.L.writeValue(payload);
+                if(writers.R) await writers.R.writeValue(payload);
+            } catch(e) { console.log("Pas connecté pour reset"); }
+            
+            ['pasS','pasT','vit','acc'].forEach(p => {
+                if(document.getElementById(p+'L')) document.getElementById(p+'L').innerText = "0";
+                if(document.getElementById(p+'R')) document.getElementById(p+'R').innerText = "0";
+            });
+            updateGlobalStatus();
+        };
+    </script>
