@@ -3,153 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Pro Dashboard - M/S²</title>
+    <title>Nicla Sense - Master Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- STYLE GENERAL --- */
-        body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #0d0d0d; 
-            color: #ffffff; 
-            margin: 0; 
-            padding: 20px; 
-            overflow-x: hidden;
-        }
-
-        .container { 
-            width: 98%; 
-            margin: 0 auto; 
-            padding-bottom: 100px; 
-        }
+        /* --- DESIGN CLASSIQUE (Retour V3) --- */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
         
-        /* HEADER */
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 30px; 
-            border-bottom: 2px solid #333; 
-            padding-bottom: 20px; 
-        }
-        h1 { margin: 0; font-size: 36px; color: #fff; letter-spacing: 1px; }
+        /* Conteneur centré classique */
+        .container { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        h1 { margin: 0; font-size: 24px; color: #fff; }
 
-        /* --- LAYOUT PRINCIPAL --- */
-        .main-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 40px; 
-            margin-bottom: 40px;
-        }
-
-        /* COLONNES */
-        .foot-column { 
-            background: #181818; 
-            padding: 30px; 
-            border-radius: 20px; 
-            border-top: 8px solid #444; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        /* Grille 2 colonnes */
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        
+        .foot-column { background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 5px solid #444; }
         .left-col { border-top-color: #00d2ff; }
         .right-col { border-top-color: #ffa502; }
-        
-        .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
-        .col-title { font-size: 28px; margin: 0; font-weight: bold;}
 
-        /* BOUTONS */
-        .btn-connect { 
-            width: 100%; 
-            padding: 20px; 
-            margin-bottom: 30px; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: 900; 
-            cursor: pointer; 
-            font-size: 20px; 
-            text-transform: uppercase;
-            transition: all 0.2s; 
-        }
-        .btn-l { background-color: #00d2ff; color: #000; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
-        .btn-l:hover { background-color: #00a0c4; transform: scale(1.02); }
-        .btn-r { background-color: #ffa502; color: #000; box-shadow: 0 0 15px rgba(255, 165, 2, 0.3); }
-        .btn-r:hover { background-color: #d18802; transform: scale(1.02); }
-        .connected { background-color: #2ed573 !important; color: white !important; box-shadow: none; cursor: default;}
+        /* Boutons Connexion */
+        .btn-connect { width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; text-transform: uppercase;}
+        .btn-l { background-color: #00d2ff; color: #000; }
+        .btn-r { background-color: #ffa502; color: #000; }
+        .connected { background-color: #2ed573 !important; color: white !important; cursor: default; }
 
-        /* --- CARTES --- */
-        .metrics-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 25px; 
-        }
-        .card { 
-            background-color: #252525; 
-            padding: 25px; 
-            border-radius: 15px; 
-            text-align: center; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .card h3 { 
-            margin: 0 0 10px 0; 
-            font-size: 14px; 
-            color: #bbb; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
-        .value { 
-            font-size: 45px; 
-            font-weight: 800; 
-            line-height: 1.1;
-        }
-        .unit { font-size: 16px; color: #666; margin-top: 5px; font-weight: normal;}
+        /* Status */
+        .status-box { background: #252525; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;}
+        .status-label { color: #888; font-size: 12px; font-weight: bold; }
+        .status-val { font-weight: bold; font-size: 16px; }
 
-        /* --- STATUS BOX --- */
-        .status-box { 
-            grid-column: span 2; 
-            background: #333; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px; 
-            border-radius: 12px;
-            margin-bottom: 10px;
+        /* Cartes Métriques */
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card { background-color: #252525; padding: 15px; border-radius: 8px; text-align: center; }
+        .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .value { font-size: 24px; font-weight: bold; }
+        .unit { font-size: 11px; color: #666; }
+
+        /* --- BATTERIE HYBRIDE (Barre + Texte) --- */
+        .battery-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;}
+        .battery-shell {
+            width: 35px; height: 16px; border: 2px solid #777; border-radius: 4px; padding: 1px; position: relative;
         }
-        .status-text { font-size: 32px; font-weight: bold; margin-left: 15px; letter-spacing: 2px;}
+        .battery-shell::after {
+            content: ''; position: absolute; right: -5px; top: 4px; width: 3px; height: 8px; background: #777; border-radius: 0 2px 2px 0;
+        }
+        .battery-level { height: 100%; width: 0%; background-color: #444; border-radius: 2px; transition: width 0.5s; }
+        .bat-text { font-size: 14px; font-weight: bold; color: #fff; }
 
-        /* --- BATTERIE STYLE --- */
-        .battery-container { display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .battery-shell { width: 50px; height: 24px; border: 3px solid #ccc; border-radius: 6px; padding: 2px; position: relative; }
-        .battery-shell::after { content: ''; position: absolute; right: -7px; top: 6px; width: 4px; height: 12px; background: #ccc; border-radius: 0 2px 2px 0; }
-        .battery-level { height: 100%; background-color: #444; width: 0%; border-radius: 3px; transition: width 0.5s, background-color 0.5s; }
-        .bat-text { font-size: 20px; font-weight: bold; }
-
-        /* --- GRAPHIQUE --- */
+        /* --- GRAPHIQUE AGRANDI --- */
         .chart-section { 
-            margin-top: 20px; 
-            background-color: #181818; 
-            padding: 20px; 
-            border-radius: 20px; 
-            height: 500px; 
-            border: 1px solid #333;
+            margin-top: 30px; 
+            background-color: #1e1e1e; 
+            padding: 15px; 
+            border-radius: 10px; 
+            height: 450px; /* Plus grand en hauteur */
         }
 
         /* --- CONTROL BAR --- */
         .control-bar {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background-color: #1a1a1a; 
-            border-top: 2px solid #444;
-            padding: 20px 0; 
-            display: flex; justify-content: center; gap: 40px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
-            z-index: 1000;
+            background-color: #252525; border-top: 1px solid #444;
+            padding: 15px 0; display: flex; justify-content: center; gap: 20px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5); z-index: 999;
         }
         .btn-action {
-            padding: 15px 40px; border-radius: 40px; border: none; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            padding: 10px 25px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; transition: 0.2s;
         }
-        .btn-reset { background: linear-gradient(135deg, #ff4757, #ff6b81); color: white; }
-        .btn-calib { background: linear-gradient(135deg, #70a1ff, #1e90ff); color: white; }
-        .btn-sleep { background: #57606f; color: #fff; }
-        .btn-wake  { background: linear-gradient(135deg, #2ed573, #7bed9f); color: #000; }
-        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
-        .btn-action:active { transform: translateY(1px); }
+        .btn-reset { background-color: #ff4757; color: white; }
+        .btn-calib { background-color: #70a1ff; color: white; }
+        .btn-sleep { background-color: #a4b0be; color: #2f3542; }
+        .btn-wake  { background-color: #2ed573; color: white; }
+        .btn-action:hover { transform: scale(1.05); filter: brightness(1.1); }
 
     </style>
 </head>
@@ -157,26 +82,22 @@
 
 <div class="container">
     <header>
-        <h1>🏃 DASHBOARD PERFORMANCE</h1>
+        <h1>👟 Nicla Sense Runner</h1>
     </header>
 
     <div class="main-grid">
         
         <div class="foot-column left-col">
-            <div class="col-header">
-                <h2 class="col-title" style="color:#00d2ff">PIED GAUCHE</h2>
-            </div>
-            
-            <button id="btnL" class="btn-connect btn-l" onclick="connectDevice('L')">CONNECTER (NiclaL)</button>
+            <button id="btnL" class="btn-connect btn-l" onclick="connectDevice('L')">CONNECTER GAUCHE</button>
             
             <div class="status-box" id="boxL">
-                <span style="color:#666; font-size: 18px;">ÉTAT</span> 
-                <span id="stateL" class="status-text" style="color:#444">...</span>
+                <span class="status-label">ÉTAT:</span> 
+                <span id="stateL" class="status-val" style="color:#666">...</span>
             </div>
-            
+
             <div class="metrics-grid">
                 <div class="card">
-                    <h3>Pas Session</h3>
+                    <h3>Pas</h3>
                     <div class="value" id="stepsL" style="color: #00d2ff;">0</div>
                 </div>
                 <div class="card">
@@ -185,35 +106,31 @@
                     <div class="unit">m/s</div>
                 </div>
                 <div class="card">
-                    <h3>Accélération</h3>
+                    <h3>Impact</h3>
                     <div class="value" id="accelL">0.0</div>
                     <div class="unit">m/s²</div>
                 </div>
                 <div class="card">
                     <h3>Batterie</h3>
-                    <div class="battery-container">
+                    <div class="battery-wrapper">
                         <div class="battery-shell"><div class="battery-level" id="batLevelL"></div></div>
-                        <div class="bat-text" id="batTextL">--%</div>
+                        <span class="bat-text" id="batTextL">--%</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="foot-column right-col">
-            <div class="col-header">
-                <h2 class="col-title" style="color:#ffa502">PIED DROIT</h2>
-            </div>
-
-            <button id="btnR" class="btn-connect btn-r" onclick="connectDevice('R')">CONNECTER (NiclaR)</button>
+            <button id="btnR" class="btn-connect btn-r" onclick="connectDevice('R')">CONNECTER DROITE</button>
 
             <div class="status-box" id="boxR">
-                <span style="color:#666; font-size: 18px;">ÉTAT</span> 
-                <span id="stateR" class="status-text" style="color:#444">...</span>
+                <span class="status-label">ÉTAT:</span> 
+                <span id="stateR" class="status-val" style="color:#666">...</span>
             </div>
-            
+
             <div class="metrics-grid">
                 <div class="card">
-                    <h3>Pas Session</h3>
+                    <h3>Pas</h3>
                     <div class="value" id="stepsR" style="color: #ffa502;">0</div>
                 </div>
                 <div class="card">
@@ -222,15 +139,15 @@
                     <div class="unit">m/s</div>
                 </div>
                 <div class="card">
-                    <h3>Accélération</h3>
+                    <h3>Impact</h3>
                     <div class="value" id="accelR">0.0</div>
                     <div class="unit">m/s²</div>
                 </div>
                 <div class="card">
                     <h3>Batterie</h3>
-                    <div class="battery-container">
+                    <div class="battery-wrapper">
                         <div class="battery-shell"><div class="battery-level" id="batLevelR"></div></div>
-                        <div class="bat-text" id="batTextR">--%</div>
+                        <span class="bat-text" id="batTextR">--%</span>
                     </div>
                 </div>
             </div>
@@ -244,14 +161,13 @@
 </div>
 
 <div class="control-bar">
-    <button class="btn-action btn-wake" onclick="sendCommand(4)">☀ Activer</button>
-    <button class="btn-action btn-calib" onclick="sendCommand(2)">⚖ Calibrer</button>
-    <button class="btn-action btn-reset" onclick="sendCommand(1)">🔄 Reset Pas</button>
-    <button class="btn-action btn-sleep" onclick="sendCommand(3)">🌙 Veille</button>
+    <button class="btn-action btn-wake" onclick="sendCommand(4)">☀ RÉVEIL</button>
+    <button class="btn-action btn-calib" onclick="sendCommand(2)">⚖ CALIBRER</button>
+    <button class="btn-action btn-reset" onclick="sendCommand(1)">🔄 RESET</button>
+    <button class="btn-action btn-sleep" onclick="sendCommand(3)">🌙 VEILLE</button>
 </div>
 
 <script>
-    // --- UUIDS ---
     const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
     const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
     const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
@@ -260,98 +176,89 @@
     const CHAR_BATTERY_UUID     = "19b10000-1004-537e-4f6c-d104768a1214";
     const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214";
 
-    let charControlL = null;
-    let charControlR = null;
+    let charControlL = null, charControlR = null;
 
-    // --- CONFIG GRAPHIQUE (ECHELLE CHANGEE POUR M/S²) ---
-    Chart.defaults.font.size = 14;
-    Chart.defaults.color = "#888";
-    
+    // --- CONFIG GRAPHIQUE (0 - 100 m/s²) ---
     const ctx = document.getElementById('dualChart').getContext('2d');
     const dualChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: Array(60).fill(''), 
+            labels: Array(60).fill(''),
             datasets: [
-                { 
-                    label: 'Gauche (m/s²)', 
-                    data: Array(60).fill(0), 
-                    borderColor: '#00d2ff', 
-                    backgroundColor: 'rgba(0, 210, 255, 0.15)', 
-                    borderWidth: 3, 
-                    tension: 0.3, 
-                    pointRadius: 0,
-                    fill: true
+                {
+                    label: 'Gauche (m/s²)',
+                    data: Array(60).fill(0),
+                    borderColor: '#00d2ff',
+                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 0
                 },
-                { 
-                    label: 'Droite (m/s²)', 
-                    data: Array(60).fill(0), 
-                    borderColor: '#ffa502', 
-                    backgroundColor: 'rgba(255, 165, 2, 0.15)', 
-                    borderWidth: 3, 
-                    tension: 0.3, 
-                    pointRadius: 0,
-                    fill: true
+                {
+                    label: 'Droite (m/s²)',
+                    data: Array(60).fill(0),
+                    borderColor: '#ffa502',
+                    backgroundColor: 'rgba(255, 165, 2, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 0
                 }
             ]
         },
         options: {
-            responsive: true, 
-            maintainAspectRatio: false, 
+            responsive: true,
+            maintainAspectRatio: false, // Permet d'étirer le graph en hauteur
             animation: false,
-            scales: { 
-                // Echelle augmentée pour m/s² (3g * 9.81 ≈ 30)
-                y: { min: 0, max: 30, grid: { color: '#333' } }, 
-                x: { display: false } 
+            scales: {
+                y: { 
+                    min: 0, 
+                    max: 100, // Demande utilisateur : Echelle 0 - 100
+                    grid: { color: '#333' } 
+                },
+                x: { display: false }
             },
-            plugins: { 
-                legend: { labels: { color: 'white', font: {size: 16} } } 
-            }
+            plugins: { legend: { labels: { color: 'white' } } }
         }
     });
 
-    // --- CONNEXION BLE ---
+    // --- CONNEXION ---
     async function connectDevice(side) {
         const nameFilter = (side === 'L') ? 'NiclaL' : 'NiclaR';
         const btn = document.getElementById('btn' + side);
-        
+
         try {
-            const device = await navigator.bluetooth.requestDevice({ filters: [{ name: nameFilter }], optionalServices: [SERVICE_UUID] });
-            btn.innerText = "CONNEXION EN COURS...";
-            btn.style.backgroundColor = "#555";
-            
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ name: nameFilter }],
+                optionalServices: [SERVICE_UUID]
+            });
+            btn.innerText = "...";
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
 
-            // Mapping des données
             setupChar(service, CHAR_PAS_SESSION_UUID, (v) => document.getElementById('steps' + side).innerText = v.getUint32(0, true));
             setupChar(service, CHAR_VITESSE_UUID, (v) => document.getElementById('speed' + side).innerText = v.getFloat32(0, true).toFixed(1));
             
-            // --- CONVERSION EN M/S² ---
+            // Conversion g -> m/s²
             setupChar(service, CHAR_ACCEL_UUID, (v) => {
                 let valG = v.getFloat32(0, true);
-                let valMps2 = valG * 9.81; // 1g = 9.81 m/s²
+                let valMps2 = valG * 9.81; 
                 document.getElementById('accel' + side).innerText = valMps2.toFixed(1);
                 updateChart(side, valMps2);
             });
 
-            // Batterie
             setupChar(service, CHAR_BATTERY_UUID, (v) => updateBatteryUI(side, v.getFloat32(0, true)));
-            
             setupChar(service, CHAR_ETAT_UUID, (v) => updateStateUI(side, v.getUint32(0, true)));
 
-            // Commande
             const ctrl = await service.getCharacteristic(CHAR_CONTROL_UUID);
             if(side === 'L') charControlL = ctrl; else charControlR = ctrl;
 
-            btn.innerText = "NICLA " + side + " CONNECTÉ";
+            btn.innerText = "CONNECTÉ";
             btn.classList.add("connected");
 
         } catch (error) {
             console.error(error);
-            alert("Erreur connexion " + nameFilter + " : " + error);
-            btn.innerText = "RÉESSAYER";
-            btn.style.backgroundColor = (side === 'L') ? "#00d2ff" : "#ffa502";
+            alert("Erreur: " + error);
+            btn.innerText = "ECHEC";
         }
     }
 
@@ -366,28 +273,11 @@
         if (charControlL) await charControlL.writeValue(val);
         if (charControlR) await charControlR.writeValue(val);
         
-        if(cmdCode === 1) { 
+        if(cmdCode === 1) { // Reset visuel
              document.getElementById('stepsL').innerText = "0"; 
              document.getElementById('stepsR').innerText = "0";
              updateStateUI('L', 0); updateStateUI('R', 0);
         }
-    }
-
-    // --- LOGIQUE BATTERIE VISUELLE ---
-    function updateBatteryUI(side, voltage) {
-        let pct = (voltage - 3.5) / (4.2 - 3.5) * 100;
-        if (pct > 100) pct = 100;
-        if (pct < 0) pct = 0;
-        
-        const bar = document.getElementById('batLevel' + side);
-        const txt = document.getElementById('batText' + side);
-        
-        bar.style.width = pct + "%";
-        txt.innerText = Math.round(pct) + "%";
-        
-        if (pct > 50) bar.style.backgroundColor = "#2ed573"; 
-        else if (pct > 20) bar.style.backgroundColor = "#ffa502";
-        else bar.style.backgroundColor = "#ff4757";
     }
 
     function updateChart(side, value) {
@@ -397,18 +287,32 @@
         dualChart.update();
     }
 
+    function updateBatteryUI(side, voltage) {
+        let pct = (voltage - 3.5) / (4.2 - 3.5) * 100;
+        if (pct > 100) pct = 100; if (pct < 0) pct = 0;
+        
+        const bar = document.getElementById('batLevel' + side);
+        const txt = document.getElementById('batText' + side);
+        
+        // Texte ET Barre
+        txt.innerText = Math.round(pct) + "%";
+        bar.style.width = pct + "%";
+        
+        if (pct > 50) bar.style.backgroundColor = "#2ed573"; 
+        else if (pct > 20) bar.style.backgroundColor = "#ffa502";
+        else bar.style.backgroundColor = "#ff4757";
+    }
+
     function updateStateUI(side, state) {
         const el = document.getElementById('state' + side);
         const box = document.getElementById('box' + side);
-        let color = "#444", text = "REPOS";
+        let color = "#666", text = "REPOS";
+        if(state === 1) { text = "MARCHE"; color = "#2ed573"; }
+        if(state === 2) { text = "COURSE"; color = "#ffa502"; }
+        if(state === 3) { text = "SPRINT"; color = "#ff4757"; }
         
-        if(state === 1) { text = "MARCHE"; color = "#2ed573"; } 
-        if(state === 2) { text = "COURSE"; color = "#ffa502"; } 
-        if(state === 3) { text = "SPRINT"; color = "#ff4757"; } 
-        
-        el.innerText = text;
-        el.style.color = (state === 0) ? "#888" : color;
-        box.style.border = (state === 0) ? "none" : `2px solid ${color}`;
+        el.innerText = text; el.style.color = (state===0) ? "#aaa" : color;
+        box.style.border = (state===0) ? "none" : `1px solid ${color}`;
     }
 </script>
 </body>
