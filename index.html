@@ -6,7 +6,7 @@
     <title>Nicla Sense - Master Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- DESIGN CLASSIQUE (Retour V3) --- */
+        /* --- DESIGN CLASSIQUE --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
         
         /* Conteneur centré classique */
@@ -51,7 +51,7 @@
         .battery-level { height: 100%; width: 0%; background-color: #444; border-radius: 2px; transition: width 0.5s; }
         .bat-text { font-size: 14px; font-weight: bold; color: #fff; }
 
-        /* --- GRAPHIQUE AGRANDI --- */
+        /* --- GRAPHIQUE --- */
         .chart-section { 
             margin-top: 30px; 
             background-color: #1e1e1e; 
@@ -106,7 +106,7 @@
                     <div class="unit">m/s</div>
                 </div>
                 <div class="card">
-                    <h3>Impact</h3>
+                    <h3>Accélération</h3>
                     <div class="value" id="accelL">0.0</div>
                     <div class="unit">m/s²</div>
                 </div>
@@ -139,7 +139,7 @@
                     <div class="unit">m/s</div>
                 </div>
                 <div class="card">
-                    <h3>Impact</h3>
+                    <h3>Accélération</h3>
                     <div class="value" id="accelR">0.0</div>
                     <div class="unit">m/s²</div>
                 </div>
@@ -207,12 +207,12 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false, // Permet d'étirer le graph en hauteur
+            maintainAspectRatio: false, 
             animation: false,
             scales: {
                 y: { 
                     min: 0, 
-                    max: 100, // Demande utilisateur : Echelle 0 - 100
+                    max: 100, // Echelle fixe demandée
                     grid: { color: '#333' } 
                 },
                 x: { display: false }
@@ -238,10 +238,9 @@
             setupChar(service, CHAR_PAS_SESSION_UUID, (v) => document.getElementById('steps' + side).innerText = v.getUint32(0, true));
             setupChar(service, CHAR_VITESSE_UUID, (v) => document.getElementById('speed' + side).innerText = v.getFloat32(0, true).toFixed(1));
             
-            // Conversion g -> m/s²
+            // --- CORRECTION : PAS DE MULTIPLICATION PAR 9.81 ---
             setupChar(service, CHAR_ACCEL_UUID, (v) => {
-                let valG = v.getFloat32(0, true);
-                let valMps2 = valG * 9.81; 
+                let valMps2 = v.getFloat32(0, true); // Déjà en m/s² depuis Arduino
                 document.getElementById('accel' + side).innerText = valMps2.toFixed(1);
                 updateChart(side, valMps2);
             });
