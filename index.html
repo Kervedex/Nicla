@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Pro - Comparatif Algos</title>
+    <title>Nicla Pro - Métriques Scientifiques</title>
     <style>
         :root { --p: #007bff; --s: #28a745; --d: #dc3545; --w: #ffc107; --purp: #6f42c1; --gray: #6c757d; --dark: #212529; --orange: #fd7e14; }
         body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
@@ -44,11 +44,12 @@
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .card { background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
-        .card h3 { font-size: 0.7rem; margin: 0; color: #888; text-transform: uppercase; }
+        /* Style des titres pour les unités */
+        .card h3 { font-size: 0.75rem; margin: 0; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
         .card p { font-size: 1.4rem; font-weight: 800; margin: 2px 0; color: #333; }
         
-        .card-home { border: 2px solid var(--p); background: #e3f2fd; } /* Ton Algo */
-        .card-chip { border: 2px solid var(--orange); background: #fff3cd; } /* Algo Puce */
+        .card-home { border: 2px solid var(--p); background: #e3f2fd; } 
+        .card-chip { border: 2px solid var(--orange); background: #fff3cd; } 
 
         .batt-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top:5px; }
         .batt-fill { height: 100%; width: 0%; background: var(--s); transition: 0.5s; }
@@ -57,7 +58,6 @@
         .bg-walk   { background: var(--s) !important; color: white !important; }
         .bg-run    { background: var(--w) !important; color: #333 !important; }
         .bg-sprint { background: var(--purp) !important; color: white !important; }
-
     </style>
 </head>
 <body>
@@ -75,7 +75,7 @@
             <div style="font-size:1.5rem; font-weight:bold; margin-top:10px" id="sysState">--</div>
         </div>
 
-        <button class="reset-btn" id="btnReset">RESET TOUS LES COMPTEURS</button>
+        <button class="reset-btn" id="btnReset">RESET SYSTÈME</button>
     </div>
 
     <div class="container">
@@ -87,8 +87,9 @@
                 <div class="card card-home"><h3>Algo Maison</h3><p id="pasSL">0</p></div>
                 <div class="card card-chip"><h3>Puce Intégrée</h3><p id="pasChipL" style="color:var(--orange)">0</p></div>
 
-                <div class="card"><h3>Vitesse m/s</h3><p id="vitL">0.00</p></div>
-                <div class="card"><h3>Accélération (m.s^-2)</h3><p id="accL">0.00</p></div>
+                <div class="card"><h3>Vitesse (m/s)</h3><p id="vitL">0.00</p></div>
+                <div class="card"><h3>Accél. (m.s<sup>-2</sup>)</h3><p id="accL">0.00</p></div>
+                
                 <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battL">--%</p><div class="batt-bar"><div id="barL" class="batt-fill"></div></div></div>
             </div>
         </div>
@@ -101,8 +102,9 @@
                 <div class="card card-home"><h3>Algo Maison</h3><p id="pasSR">0</p></div>
                 <div class="card card-chip"><h3>Puce Intégrée</h3><p id="pasChipR" style="color:var(--orange)">0</p></div>
 
-                <div class="card"><h3>Intensité</h3><p id="vitR">0.00</p></div>
-                <div class="card"><h3>Impact (G)</h3><p id="accR">0.00</p></div>
+                <div class="card"><h3>Vitesse (m/s)</h3><p id="vitR">0.00</p></div>
+                <div class="card"><h3>Accél. (m.s<sup>-2</sup>)</h3><p id="accR">0.00</p></div>
+                
                 <div class="card" style="grid-column: span 2;"><h3>Batterie</h3><p id="battR">--%</p><div class="batt-bar"><div id="barR" class="batt-fill"></div></div></div>
             </div>
         </div>
@@ -110,13 +112,13 @@
 
     <script>
         const UUID = {
-            pasS: "19b10000-1001-537e-4f6c-d104768a1214", // Ton algo
+            pasS: "19b10000-1001-537e-4f6c-d104768a1214", 
             pasT: "19b10000-1002-537e-4f6c-d104768a1214",
             vit:  "19b10000-1003-537e-4f6c-d104768a1214",
             batt: "19b10000-1004-537e-4f6c-d104768a1214",
             acc:  "19b10000-1005-537e-4f6c-d104768a1214",
             etat: "19b10000-1006-537e-4f6c-d104768a1214",
-            chip: "19b10000-1007-537e-4f6c-d104768a1214"  // Algo Puce
+            chip: "19b10000-1007-537e-4f6c-d104768a1214"
         };
 
         let stateL = 0, stateR = 0, smartSteps = 0;
@@ -186,12 +188,8 @@
 
                 listen(UUID.etat, (e) => processGait(side, e.target.value.getUint32(0, true)));
                 listen(UUID.pasS, (e) => document.getElementById('pasSL'+(side==='R'?'':'')).innerText = e.target.value.getUint32(0,true));
-                // Correction pour l'affichage correct gauche/droite
                 listen(UUID.pasS, (e) => document.getElementById('pasS'+side).innerText = e.target.value.getUint32(0,true));
-                
-                // NOUVEAU : Écoute du compteur PUCE
                 listen(UUID.chip, (e) => document.getElementById('pasChip'+side).innerText = e.target.value.getUint32(0,true));
-                
                 listen(UUID.vit,  (e) => document.getElementById('vit'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
                 listen(UUID.acc,  (e) => document.getElementById('acc'+side).innerText = e.target.value.getFloat32(0,true).toFixed(2));
                 listen(UUID.batt, (e) => {
@@ -216,7 +214,6 @@
                 if(writers.R) await writers.R.writeValue(payload);
             } catch(e) {}
             
-            // Reset visuel
             ['pasS','pasChip','vit','acc'].forEach(p => {
                 if(document.getElementById(p+'L')) document.getElementById(p+'L').innerText = "0";
                 if(document.getElementById(p+'R')) document.getElementById(p+'R').innerText = "0";
