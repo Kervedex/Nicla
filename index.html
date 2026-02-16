@@ -1,247 +1,214 @@
-#include "Arduino.h"
-#include "Arduino_BHY2.h"
-#include <ArduinoBLE.h>
-#include "Nicla_System.h"
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nicla Sense - Control Center</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; padding-bottom: 80px; }
+        
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        h1 { margin: 0; font-size: 24px; color: #fff; }
 
-// ==========================================
-// --- CONFIGURATION ---
-// ==========================================
-#define DEVICE_NAME            "NiclaL"  // <<< METTRE "NiclaR" SUR L'AUTRE
-#define STEP_THRESH_VERTICAL   1.20  
-#define STEP_THRESH_HORIZ      0.60  
-#define STEP_MIN_DELAY         250   
+        /* Layout */
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .foot-column { background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 5px solid #444; }
+        .left-col { border-top-color: #00d2ff; }
+        .right-col { border-top-color: #ffa502; }
+        
+        /* Boutons Connect */
+        .btn-connect { width: 100%; padding: 15px; margin-bottom: 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-l { background-color: #00d2ff; color: #000; }
+        .btn-r { background-color: #ffa502; color: #000; }
+        .connected { background-color: #2ed573 !important; color: white !important; }
 
-// ==========================================
-// --- UUIDS ---
-// ==========================================
-#define SERVICE_UUID           "19B10000-0000-537E-4F6C-D104768A1214"
-// UUIDs de données
-#define CHAR_PAS_SESSION_UUID  "19B10000-1001-537E-4F6C-D104768A1214"
-#define CHAR_PAS_TOTAL_UUID    "19B10000-1002-537E-4F6C-D104768A1214"
-#define CHAR_VITESSE_UUID      "19B10000-1003-537E-4F6C-D104768A1214"
-#define CHAR_BATTERY_UUID      "19B10000-1004-537E-4F6C-D104768A1214"
-#define CHAR_ACCEL_UUID        "19B10000-1005-537E-4F6C-D104768A1214"
-#define CHAR_ETAT_UUID         "19B10000-1006-537E-4F6C-D104768A1214"
-// NOUVEAU : UUID de Commande (Reset, Calib, Veille)
-#define CHAR_CONTROL_UUID      "19B10000-5001-537E-4F6C-D104768A1214"
+        /* Cards */
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card { background-color: #252525; padding: 15px; border-radius: 10px; text-align: center; }
+        .value { font-size: 28px; font-weight: bold; }
+        .unit { font-size: 12px; color: #666; }
+        .card h3 { color: #aaa; font-size: 12px; margin-bottom: 5px; text-transform: uppercase;}
 
-BLEService movementService(SERVICE_UUID);
-BLEUnsignedIntCharacteristic pasSessionChar(CHAR_PAS_SESSION_UUID, BLERead | BLENotify);
-BLEUnsignedIntCharacteristic pasTotauxChar(CHAR_PAS_TOTAL_UUID, BLERead | BLENotify);
-BLEFloatCharacteristic vitesseChar(CHAR_VITESSE_UUID, BLERead | BLENotify);
-BLEFloatCharacteristic batteryChar(CHAR_BATTERY_UUID, BLERead | BLENotify);
-BLEFloatCharacteristic accelChar(CHAR_ACCEL_UUID, BLERead | BLENotify);
-BLEUnsignedIntCharacteristic etatChar(CHAR_ETAT_UUID, BLERead | BLENotify);
-// Nouvelle Caractéristique d'écriture (Byte)
-BLEByteCharacteristic controlChar(CHAR_CONTROL_UUID, BLERead | BLEWrite);
+        /* Status Box */
+        .status-box { grid-column: span 2; background: #333; display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 8px;}
 
-// ==========================================
-// --- VARIABLES ---
-// ==========================================
-SensorXYZ accelerometer(SENSOR_ID_LACC);
-SensorXYZ gravity(SENSOR_ID_GRA);
+        /* Graphique */
+        .chart-section { margin-top: 30px; background-color: #1e1e1e; padding: 20px; border-radius: 10px; height: 300px; }
 
-float calG_x = 0, calG_y = 0, calG_z = 0; 
-bool calibrated = false;
-bool enVeille = false; // État de veille
+        /* --- CONTROL BAR (NOUVEAU) --- */
+        .control-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: #252525; border-top: 1px solid #444;
+            padding: 15px 0; display: flex; justify-content: center; gap: 20px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+        }
+        .btn-action {
+            padding: 10px 25px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn-reset { background-color: #ff4757; color: white; }
+        .btn-calib { background-color: #70a1ff; color: white; }
+        .btn-sleep { background-color: #a4b0be; color: #2f3542; }
+        .btn-wake  { background-color: #2ed573; color: white; }
+        
+        .btn-action:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .btn-action:active { transform: scale(0.95); }
+        .btn-action:disabled { background-color: #444; color: #888; cursor: not-allowed; transform: none; }
 
-float vitesseInst = 0, accel_vert_mag = 0, accel_horiz_mag = 0;
-unsigned long lastStepTimestamp = 0, lastCheck = 0, dernierMouvement = 0;
-bool isStepPeaking = false, enMouvement = false;
-uint32_t pasS = 0, pasT = 0;
+    </style>
+</head>
+<body>
 
-void setup() {
-  Serial.begin(115200);
-  nicla::begin();
-  nicla::leds.begin();
-  nicla::leds.setColor(red); 
+<div class="container">
+    <header>
+        <h1>👟 Nicla Control Center</h1>
+    </header>
 
-  BHY2.begin(NICLA_STANDALONE);
-  accelerometer.begin();
-  gravity.begin(); 
+    <div class="main-grid">
+        <div class="foot-column left-col">
+            <button id="btnL" class="btn-connect btn-l" onclick="connectDevice('L')">CONNECTER GAUCHE</button>
+            <div class="status-box" id="boxL"><span>ÉTAT:</span> <span id="stateL" style="font-weight:bold; margin-left:10px; color:#888">...</span></div>
+            <br>
+            <div class="metrics-grid">
+                <div class="card"><h3>Pas</h3><div class="value" id="stepsL" style="color: #00d2ff;">0</div></div>
+                <div class="card"><h3>Vitesse</h3><div class="value" id="speedL">0.0</div></div>
+                <div class="card"><h3>Force (g)</h3><div class="value" id="accelL">0.00</div></div>
+                <div class="card"><h3>Batterie</h3><div class="value" id="batL">--</div></div>
+            </div>
+        </div>
 
-  if (!BLE.begin()) while (1);
-  
-  BLE.setLocalName(DEVICE_NAME);
-  BLE.setAdvertisedService(movementService);
-  
-  movementService.addCharacteristic(pasSessionChar);
-  movementService.addCharacteristic(pasTotauxChar);
-  movementService.addCharacteristic(vitesseChar);
-  movementService.addCharacteristic(batteryChar);
-  movementService.addCharacteristic(accelChar);
-  movementService.addCharacteristic(etatChar);
-  movementService.addCharacteristic(controlChar); // Ajout
-  
-  BLE.addService(movementService);
-  BLE.advertise();
+        <div class="foot-column right-col">
+            <button id="btnR" class="btn-connect btn-r" onclick="connectDevice('R')">CONNECTER DROITE</button>
+            <div class="status-box" id="boxR"><span>ÉTAT:</span> <span id="stateR" style="font-weight:bold; margin-left:10px; color:#888">...</span></div>
+            <br>
+            <div class="metrics-grid">
+                <div class="card"><h3>Pas</h3><div class="value" id="stepsR" style="color: #ffa502;">0</div></div>
+                <div class="card"><h3>Vitesse</h3><div class="value" id="speedR">0.0</div></div>
+                <div class="card"><h3>Force (g)</h3><div class="value" id="accelR">0.00</div></div>
+                <div class="card"><h3>Batterie</h3><div class="value" id="batR">--</div></div>
+            </div>
+        </div>
+    </div>
 
-  delay(1000); 
-  calibrateZ();
-}
+    <div class="chart-section">
+        <canvas id="dualChart"></canvas>
+    </div>
+</div>
 
-void loop() {
-  BLE.poll();
-  BHY2.update();
+<div class="control-bar">
+    <button class="btn-action btn-wake" onclick="sendCommand(4)">☀ RÉVEIL</button>
+    <button class="btn-action btn-calib" onclick="sendCommand(2)">⚖ RECALIBRER</button>
+    <button class="btn-action btn-reset" onclick="sendCommand(1)">🔄 RESET SESSION</button>
+    <button class="btn-action btn-sleep" onclick="sendCommand(3)">🌙 VEILLE</button>
+</div>
 
-  // --- GESTION DES COMMANDES (TELECOMMANDE) ---
-  if (controlChar.written()) {
-     byte cmd = controlChar.value();
-     
-     switch(cmd) {
-        case 1: // RESET
-           pasS = 0; pasT = 0; vitesseInst = 0;
-           pasSessionChar.writeValue(0);
-           pasTotauxChar.writeValue(0);
-           etatChar.writeValue(0);
-           break;
-           
-        case 2: // RECALIBRATION
-           enVeille = false; // On se réveille pour calibrer
-           accelerometer.begin(); 
-           gravity.begin();
-           calibrateZ();
-           break;
-           
-        case 3: // MISE EN VEILLE
-           if (!enVeille) {
-             enVeille = true;
-             nicla::leds.setColor(off); // Eteindre LED
-             // On garde BLE actif, mais on stop les capteurs gourmands
-             // Note: accelerometer.end() ne marche pas toujours bien sur BHY2, 
-             // on va surtout arrêter de traiter les données.
-             etatChar.writeValue(0); // Etat repos
-             accelChar.writeValue(0);
-             vitesseChar.writeValue(0);
-           }
-           break;
-           
-        case 4: // REVEIL
-           if (enVeille) {
-             enVeille = false;
-             // On indique le réveil
-             if(calibrated) nicla::leds.setColor(green);
-             else nicla::leds.setColor(red);
-           }
-           break;
-     }
-  }
+<script>
+    // --- UUIDS ---
+    const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
+    const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
+    const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
+    const CHAR_ACCEL_UUID       = "19b10000-1005-537e-4f6c-d104768a1214";
+    const CHAR_ETAT_UUID        = "19b10000-1006-537e-4f6c-d104768a1214";
+    const CHAR_BATTERY_UUID     = "19b10000-1004-537e-4f6c-d104768a1214";
+    // NOUVEAU UUID COMMANDE
+    const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214";
 
-  // Si on est en veille, on ne fait rien de physique
-  if (enVeille) return;
+    let charControlL = null;
+    let charControlR = null;
 
-  if (millis() - lastCheck >= 20) { 
-    if (calibrated) {
-      updatePhysics();       
-      detectStepScientific(); 
+    // --- GRAPHIQUE ---
+    const ctx = document.getElementById('dualChart').getContext('2d');
+    const dualChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array(50).fill(''),
+            datasets: [
+                { label: 'Gauche (g)', data: Array(50).fill(0), borderColor: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.1)', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+                { label: 'Droite (g)', data: Array(50).fill(0), borderColor: '#ffa502', backgroundColor: 'rgba(255, 165, 2, 0.1)', borderWidth: 2, tension: 0.3, pointRadius: 0 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: false,
+            scales: { y: { min: 0, max: 3.0, grid: { color: '#333' } }, x: { display: false } },
+            plugins: { legend: { labels: { color: 'white' } } }
+        }
+    });
+
+    // --- CONNEXION ---
+    async function connectDevice(side) {
+        const nameFilter = (side === 'L') ? 'NiclaL' : 'NiclaR';
+        const btn = document.getElementById('btn' + side);
+        
+        try {
+            const device = await navigator.bluetooth.requestDevice({ filters: [{ name: nameFilter }], optionalServices: [SERVICE_UUID] });
+            btn.innerText = "CONNEXION...";
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService(SERVICE_UUID);
+
+            // Liaison Data
+            setupChar(service, CHAR_PAS_SESSION_UUID, (v) => document.getElementById('steps' + side).innerText = v.getUint32(0, true));
+            setupChar(service, CHAR_VITESSE_UUID, (v) => document.getElementById('speed' + side).innerText = v.getFloat32(0, true).toFixed(2));
+            setupChar(service, CHAR_ACCEL_UUID, (v) => {
+                let val = v.getFloat32(0, true);
+                document.getElementById('accel' + side).innerText = val.toFixed(2);
+                updateChart(side, val);
+            });
+            setupChar(service, CHAR_BATTERY_UUID, (v) => document.getElementById('bat' + side).innerText = v.getFloat32(0, true).toFixed(2));
+            setupChar(service, CHAR_ETAT_UUID, (v) => updateStateUI(side, v.getUint32(0, true)));
+
+            // Liaison Commande (IMPORTANT pour les boutons)
+            const ctrl = await service.getCharacteristic(CHAR_CONTROL_UUID);
+            if(side === 'L') charControlL = ctrl; else charControlR = ctrl;
+
+            btn.innerText = "CONNECTÉ";
+            btn.classList.add("connected");
+
+        } catch (error) {
+            console.error(error);
+            alert("Erreur: " + error);
+            btn.innerText = "ECHEC";
+        }
     }
-    updateBattery();         
-    lastCheck = millis();
-  }
-}
 
-void calibrateZ() {
-  float sumX = 0, sumY = 0, sumZ = 0;
-  int samples = 50;
-  
-  nicla::leds.setColor(blue); 
+    async function setupChar(service, uuid, callback) {
+        const char = await service.getCharacteristic(uuid);
+        await char.startNotifications();
+        char.addEventListener('characteristicvaluechanged', (e) => callback(e.target.value));
+    }
 
-  for(int i=0; i<samples; i++) {
-    BHY2.update();
-    sumX += gravity.x(); 
-    sumY += gravity.y();
-    sumZ += gravity.z();
-    delay(10);
-  }
+    // --- ENVOI DE COMMANDE (1=Reset, 2=Calib, 3=Sleep, 4=Wake) ---
+    async function sendCommand(cmdCode) {
+        const val = Uint8Array.of(cmdCode);
+        if (charControlL) await charControlL.writeValue(val);
+        if (charControlR) await charControlR.writeValue(val);
+        
+        // Petit feedback visuel
+        if(cmdCode === 1) { // Reset UI
+             document.getElementById('stepsL').innerText = "0"; 
+             document.getElementById('stepsR').innerText = "0";
+             updateStateUI('L', 0); updateStateUI('R', 0);
+        }
+    }
 
-  float avgX = sumX / samples;
-  float avgY = sumY / samples;
-  float avgZ = sumZ / samples;
-  float mag = sqrt(avgX*avgX + avgY*avgY + avgZ*avgZ);
+    // --- HELPERS ---
+    function updateChart(side, value) {
+        const idx = (side === 'L') ? 0 : 1;
+        const data = dualChart.data.datasets[idx].data;
+        data.shift(); data.push(value);
+        dualChart.update();
+    }
 
-  if (mag > 0) {
-    calG_x = avgX / mag;
-    calG_y = avgY / mag;
-    calG_z = avgZ / mag;
-    calibrated = true;
-    nicla::leds.setColor(green); 
-  } else {
-    nicla::leds.setColor(red); 
-  }
-}
-
-void updatePhysics() {
-  float scale = 9.81 / 4096.0;
-  float raw_ax = accelerometer.x() * scale;
-  float raw_ay = accelerometer.y() * scale;
-  float raw_az = accelerometer.z() * scale;
-
-  float vert_component = (raw_ax * calG_x) + (raw_ay * calG_y) + (raw_az * calG_z);
-  accel_vert_mag = abs(vert_component);
-
-  float horiz_ax = raw_ax - (vert_component * calG_x);
-  float horiz_ay = raw_ay - (vert_component * calG_y);
-  float horiz_az = raw_az - (vert_component * calG_z);
-
-  accel_horiz_mag = sqrt(horiz_ax*horiz_ax + horiz_ay*horiz_ay + horiz_az*horiz_az);
-  accelChar.writeValue(enMouvement ? accel_horiz_mag : 0.00);
-
-  if (enMouvement) {
-    float dt = 0.02; 
-    vitesseInst += (accel_horiz_mag * dt);
-    vitesseInst *= 0.95; 
-  } else {
-    vitesseInst *= 0.8;
-    if(vitesseInst < 0.1) vitesseInst = 0;
-  }
-  vitesseChar.writeValue(vitesseInst);
-}
-
-void detectStepScientific() {
-  unsigned long currentMillis = millis();
-  bool impactCondition = (accel_vert_mag > STEP_THRESH_VERTICAL);
-  bool motionCondition = (accel_horiz_mag > STEP_THRESH_HORIZ);
-  
-  if (impactCondition && motionCondition) isStepPeaking = true; 
-
-  if (isStepPeaking && (accel_vert_mag < STEP_THRESH_VERTICAL)) {
-    isStepPeaking = false; 
-    if (currentMillis - lastStepTimestamp > STEP_MIN_DELAY) registerStep(currentMillis);
-  }
-  
-  if (enMouvement && (currentMillis - dernierMouvement > 2000)) {
-     enMouvement = false;
-     etatChar.writeValue(0); 
-  }
-}
-
-void registerStep(unsigned long timeMs) {
-  unsigned long stepDuration = timeMs - lastStepTimestamp;
-  lastStepTimestamp = timeMs;
-  pasS++; pasT++;
-  pasSessionChar.writeValue(pasS);
-  pasTotauxChar.writeValue(pasT);
-  enMouvement = true;
-  dernierMouvement = timeMs;
-  
-  int type = 1; 
-  if (stepDuration < 400) type = 2; 
-  if (stepDuration < 300) type = 3; 
-  etatChar.writeValue(type);
-}
-
-void updateBattery() {
-  static unsigned long tBat = 0;
-  if (millis() - tBat > 10000) { 
-    tBat = millis();
-    float voltage = nicla::getCurrentBatteryVoltage();
-    batteryChar.writeValue(voltage);
-    
-    // Alerte batterie
-    if (voltage < 3.50 && !enVeille) { 
-        nicla::leds.setColor(red);
-        delay(50);
-        nicla::leds.setColor(off);
-    } 
-  }
-}
+    function updateStateUI(side, state) {
+        const el = document.getElementById('state' + side);
+        const box = document.getElementById('box' + side);
+        let color = "#888", text = "REPOS";
+        if(state === 1) { text = "MARCHE"; color = "#2ed573"; }
+        if(state === 2) { text = "COURSE"; color = "#ffa502"; }
+        if(state === 3) { text = "SPRINT"; color = "#ff4757"; }
+        el.innerText = text; el.style.color = color; box.style.border = `1px solid ${color}`;
+    }
+</script>
+</body>
+</html>
