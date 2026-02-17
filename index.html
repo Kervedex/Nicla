@@ -3,316 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Sense - Master Dashboard</title>
+    <title>Nicla Run - Physics Monitor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- DESIGN CLASSIQUE (V3/V6) --- */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
-        
-        /* Conteneur centré */
-        .container { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        h1 { margin: 0; font-size: 24px; color: #fff; }
-
-        /* Grille 2 colonnes */
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        
-        .foot-column { background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 5px solid #444; }
-        .left-col { border-top-color: #00d2ff; }
-        .right-col { border-top-color: #ffa502; }
-
-        /* Boutons Connexion */
-        .btn-connect { width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; text-transform: uppercase;}
-        .btn-l { background-color: #00d2ff; color: #000; }
-        .btn-r { background-color: #ffa502; color: #000; }
-        .connected { background-color: #2ed573 !important; color: white !important; cursor: default; }
-
-        /* Status */
-        .status-box { background: #252525; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;}
-        .status-label { color: #888; font-size: 12px; font-weight: bold; }
-        .status-val { font-weight: bold; font-size: 16px; }
-
-        /* Cartes Métriques */
-        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background-color: #252525; padding: 15px; border-radius: 8px; text-align: center; }
-        .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
-        .value { font-size: 24px; font-weight: bold; }
-        .unit { font-size: 11px; color: #666; }
-
-        /* --- BATTERIE HYBRIDE --- */
-        .battery-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;}
-        .battery-shell {
-            width: 35px; height: 16px; border: 2px solid #777; border-radius: 4px; padding: 1px; position: relative;
-        }
-        .battery-shell::after {
-            content: ''; position: absolute; right: -5px; top: 4px; width: 3px; height: 8px; background: #777; border-radius: 0 2px 2px 0;
-        }
-        .battery-level { height: 100%; width: 0%; background-color: #444; border-radius: 2px; transition: width 0.5s; }
-        .bat-text { font-size: 14px; font-weight: bold; color: #fff; }
-
-        /* --- GRAPHIQUE --- */
-        .chart-section { 
-            margin-top: 30px; 
-            background-color: #1e1e1e; 
-            padding: 15px; 
-            border-radius: 10px; 
-            height: 450px; 
+        :root {
+            --bg-color: #0f1115;
+            --card-bg: #1a1d24;
+            --text-main: #ffffff;
+            --text-sub: #8b9bb4;
+            --accent-cyan: #00d2ff; /* Horizontal */
+            --accent-red: #ff4b4b;  /* Vertical */
+            --accent-green: #00ff9d;
         }
 
-        /* --- CONTROL BAR --- */
-        .control-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background-color: #252525; border-top: 1px solid #444;
-            padding: 15px 0; display: flex; justify-content: center; gap: 20px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.5); z-index: 999;
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
         }
-        .btn-action {
-            padding: 10px 25px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; transition: 0.2s;
+
+        /* En-tête */
+        header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .btn-reset { background-color: #ff4757; color: white; }
-        .btn-calib { background-color: #70a1ff; color: white; }
-        .btn-sleep { background-color: #a4b0be; color: #2f3542; }
-        .btn-wake  { background-color: #2ed573; color: white; }
-        .btn-action:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        h1 { margin: 0; font-size: 1.2rem; }
+        .status { font-size: 0.8rem; color: var(--text-sub); }
+        .status.connected { color: var(--accent-green); }
+
+        /* Bouton Connexion */
+        #connectBtn {
+            background: linear-gradient(135deg, var(--accent-cyan), #007bff);
+            border: none;
+            padding: 12px 24px;
+            color: white;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: transform 0.2s;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+        #connectBtn:active { transform: scale(0.98); }
+
+        /* Grille de données */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto 20px auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .card-full { grid-column: span 2; }
+
+        .label {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .unit { font-size: 0.9rem; color: var(--text-sub); margin-left: 3px; }
+
+        /* Styles spécifiques */
+        .val-cyan { color: var(--accent-cyan); }
+        .val-red { color: var(--accent-red); }
+        .val-green { color: var(--accent-green); }
+
+        /* Double valeur (H / V) */
+        .dual-value {
+            display: flex;
+            gap: 15px;
+            font-size: 1.2rem;
+        }
+        .dual-item { display: flex; flex-direction: column; align-items: center; }
+        .dual-label { font-size: 0.6rem; color: var(--text-sub); }
+
+        /* Graphique */
+        .chart-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            padding: 10px;
+            border-radius: 15px;
+            height: 250px;
+        }
+
+        /* Contrôles */
+        .controls {
+            max-width: 600px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .ctrl-btn {
+            background-color: #2c313a;
+            border: 1px solid #3e4552;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .ctrl-btn:hover { background-color: #3e4552; }
 
     </style>
 </head>
 <body>
 
-<div class="container">
     <header>
-        <h1>👟 Nicla Sense Runner</h1>
+        <div>
+            <h1>NICLA RUN <span style="color:var(--accent-cyan)">V8</span></h1>
+            <div id="connectionStatus" class="status">Déconnecté</div>
+        </div>
+        <div id="batteryDisplay" style="font-weight:bold; color: var(--text-sub);">-- V</div>
     </header>
 
-    <div class="main-grid">
+    <button id="connectBtn">SCANNER & CONNECTER</button>
+
+    <div class="dashboard-grid">
+        <div class="card card-full">
+            <div class="label">Vitesse (Horizontale)</div>
+            <div class="value val-cyan"><span id="speedVal">0.0</span><span class="unit">km/h</span></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Session</div>
+            <div class="value"><span id="stepSession">0</span></div>
+        </div>
+        <div class="card">
+            <div class="label">Total</div>
+            <div class="value"><span id="stepTotal">0</span></div>
+        </div>
+
+        <div class="card card-full">
+            <div class="label">Accélérations (m/s²)</div>
+            <div class="dual-value">
+                <div class="dual-item">
+                    <span class="value val-cyan" id="accelHorizVal">0.0</span>
+                    <span class="dual-label">HORIZ (Propulsion)</span>
+                </div>
+                <div style="width:1px; background:#333;"></div>
+                <div class="dual-item">
+                    <span class="value val-red" id="accelVertVal">0.0</span>
+                    <span class="dual-label">VERT (Impact)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-full">
+            <div class="label">État Détecté</div>
+            <div class="value val-green" id="stateVal" style="font-size: 1.5rem;">REPOS</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="accelChart"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn" onclick="sendCommand(1)">RESET PAS</button>
+        <button class="ctrl-btn" onclick="sendCommand(2)">CALIBRER</button>
+        <button class="ctrl-btn" onclick="toggleSleep()">VEILLE / ON</button>
+    </div>
+
+    <script>
+        // --- CONFIGURATION UUIDs ---
+        const SERVICE_UUID = "19b10000-0000-537e-4f6c-d104768a1214";
         
-        <div class="foot-column left-col">
-            <button id="btnL" class="btn-connect btn-l" onclick="connectDevice('L')">CONNECTER GAUCHE</button>
-            
-            <div class="status-box" id="boxL">
-                <span class="status-label">ÉTAT:</span> 
-                <span id="stateL" class="status-val" style="color:#666">...</span>
-            </div>
+        const CHAR_UUIDS = {
+            SESSION: "19b10000-1001-537e-4f6c-d104768a1214",
+            TOTAL:   "19b10000-1002-537e-4F6C-d104768a1214",
+            SPEED:   "19b10000-1003-537e-4f6c-d104768a1214",
+            BATT:    "19b10000-1004-537e-4f6c-d104768a1214",
+            HORIZ:   "19b10000-1005-537e-4f6c-d104768a1214", // Ancien "Accel" devient Horizontal
+            STATE:   "19b10000-1006-537e-4f6c-d104768a1214",
+            VERT:    "19b10000-1007-537e-4f6c-d104768a1214", // NOUVEAU !
+            CTRL:    "19b10000-5001-537e-4f6c-d104768a1214"
+        };
 
-            <div class="metrics-grid">
-                <div class="card">
-                    <h3>Pas</h3>
-                    <div class="value" id="stepsL" style="color: #00d2ff;">0</div>
-                </div>
-                <div class="card">
-                    <h3>Vitesse</h3>
-                    <div class="value" id="speedL">0.0</div>
-                    <div class="unit">m/s</div>
-                </div>
-                <div class="card">
-                    <h3>Accélération</h3>
-                    <div class="value" id="accelL">0.0</div>
-                    <div class="unit">m/s²</div>
-                </div>
-                <div class="card">
-                    <h3>Batterie</h3>
-                    <div class="battery-wrapper">
-                        <div class="battery-shell"><div class="battery-level" id="batLevelL"></div></div>
-                        <span class="bat-text" id="batTextL">--%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        // --- VARIABLES GLOBALES ---
+        let device, server, service;
+        let controlChar; // Pour envoyer des commandes
+        let isSleep = false;
 
-        <div class="foot-column right-col">
-            <button id="btnR" class="btn-connect btn-r" onclick="connectDevice('R')">CONNECTER DROITE</button>
-
-            <div class="status-box" id="boxR">
-                <span class="status-label">ÉTAT:</span> 
-                <span id="stateR" class="status-val" style="color:#666">...</span>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="card">
-                    <h3>Pas</h3>
-                    <div class="value" id="stepsR" style="color: #ffa502;">0</div>
-                </div>
-                <div class="card">
-                    <h3>Vitesse</h3>
-                    <div class="value" id="speedR">0.0</div>
-                    <div class="unit">m/s</div>
-                </div>
-                <div class="card">
-                    <h3>Accélération</h3>
-                    <div class="value" id="accelR">0.0</div>
-                    <div class="unit">m/s²</div>
-                </div>
-                <div class="card">
-                    <h3>Batterie</h3>
-                    <div class="battery-wrapper">
-                        <div class="battery-shell"><div class="battery-level" id="batLevelR"></div></div>
-                        <span class="bat-text" id="batTextR">--%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="chart-section">
-        <canvas id="dualChart"></canvas>
-    </div>
-</div>
-
-<div class="control-bar">
-    <button class="btn-action btn-wake" onclick="sendCommand(4)">☀ RÉVEIL</button>
-    <button class="btn-action btn-calib" onclick="sendCommand(2)">⚖ CALIBRER</button>
-    <button class="btn-action btn-reset" onclick="sendCommand(1)">🔄 RESET</button>
-    <button class="btn-action btn-sleep" onclick="sendCommand(3)">🌙 VEILLE</button>
-</div>
-
-<script>
-    const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
-    const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
-    const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
-    const CHAR_ACCEL_UUID       = "19b10000-1005-537e-4f6c-d104768a1214";
-    const CHAR_ETAT_UUID        = "19b10000-1006-537e-4f6c-d104768a1214";
-    const CHAR_BATTERY_UUID     = "19b10000-1004-537e-4f6c-d104768a1214";
-    const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214";
-
-    let charControlL = null, charControlR = null;
-
-    // --- CONFIG GRAPHIQUE (0 - 50 m/s²) ---
-    const ctx = document.getElementById('dualChart').getContext('2d');
-    const dualChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: Array(60).fill(''),
-            datasets: [
-                {
-                    label: 'Gauche (m/s²)',
-                    data: Array(60).fill(0),
-                    borderColor: '#00d2ff',
-                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Droite (m/s²)',
-                    data: Array(60).fill(0),
-                    borderColor: '#ffa502',
-                    backgroundColor: 'rgba(255, 165, 2, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, 
-            animation: false,
-            scales: {
-                y: { 
-                    min: 0, 
-                    max: 50, // Echelle fixe modifiée à 50
-                    grid: { color: '#333' } 
-                },
-                x: { display: false }
+        // --- SETUP GRAPHIQUE (CHART.JS) ---
+        const ctx = document.getElementById('accelChart').getContext('2d');
+        const accelChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(50).fill(''), // 50 points de données
+                datasets: [
+                    {
+                        label: 'Propulsion (H)',
+                        borderColor: '#00d2ff', // Cyan
+                        backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3, // Courbe lisse
+                        data: Array(50).fill(0)
+                    },
+                    {
+                        label: 'Impact (V)',
+                        borderColor: '#ff4b4b', // Rouge
+                        backgroundColor: 'rgba(255, 75, 75, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.1, // Plus sec pour l'impact
+                        data: Array(50).fill(0)
+                    }
+                ]
             },
-            plugins: { legend: { labels: { color: 'white' } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false, // Désactivé pour performance temps réel
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: 20, // Echelle par défaut
+                        grid: { color: '#333' }
+                    },
+                    x: { display: false }
+                },
+                plugins: {
+                    legend: { labels: { color: 'white' } }
+                }
+            }
+        });
+
+        // --- BLUETOOTH CONNEXION ---
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                // 1. Scanner
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'Nicla' }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                document.getElementById('connectionStatus').innerText = "Connexion...";
+                
+                // 2. Connexion GATT
+                server = await device.gatt.connect();
+                service = await server.getPrimaryService(SERVICE_UUID);
+
+                // 3. Setup des notifications pour chaque caractéristique
+                await setupCharacteristic(CHAR_UUIDS.SESSION, 'int', (v) => updateText('stepSession', v));
+                await setupCharacteristic(CHAR_UUIDS.TOTAL,   'int', (v) => updateText('stepTotal', v));
+                
+                // Vitesse (Convertir m/s en km/h)
+                await setupCharacteristic(CHAR_UUIDS.SPEED,   'float', (v) => {
+                    let kmh = (v * 3.6).toFixed(1);
+                    updateText('speedVal', kmh);
+                });
+
+                // Batterie
+                await setupCharacteristic(CHAR_UUIDS.BATT,    'float', (v) => {
+                    document.getElementById('batteryDisplay').innerText = v.toFixed(2) + " V";
+                });
+
+                // Accel HORIZONTALE (Bleu)
+                await setupCharacteristic(CHAR_UUIDS.HORIZ,   'float', (v) => {
+                    updateText('accelHorizVal', v.toFixed(1));
+                    updateChart(0, v); // Dataset 0 = Bleu
+                });
+
+                // Accel VERTICALE (Rouge) - NOUVEAU
+                await setupCharacteristic(CHAR_UUIDS.VERT,    'float', (v) => {
+                    updateText('accelVertVal', v.toFixed(1));
+                    updateChart(1, v); // Dataset 1 = Rouge
+                });
+
+                // État (Marche/Course)
+                await setupCharacteristic(CHAR_UUIDS.STATE,   'int', (v) => {
+                    const states = ["REPOS", "MARCHE", "COURSE", "SPRINT"];
+                    updateText('stateVal', states[v] || "INCONNU");
+                });
+
+                // Control (Ecriture seulement)
+                controlChar = await service.getCharacteristic(CHAR_UUIDS.CTRL);
+
+                // UI Update
+                document.getElementById('connectionStatus').innerText = "Connecté à " + device.name;
+                document.getElementById('connectionStatus').classList.add('connected');
+                document.getElementById('connectBtn').style.display = 'none';
+
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+
+            } catch (error) {
+                console.error("Erreur:", error);
+                alert("Erreur connexion: " + error);
+            }
+        });
+
+        // --- FONCTIONS UTILITAIRES ---
+
+        async function setupCharacteristic(uuid, type, callback) {
+            try {
+                const char = await service.getCharacteristic(uuid);
+                await char.startNotifications();
+                char.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = event.target.value;
+                    let parsedVal;
+                    if (type === 'int') parsedVal = value.getUint32(0, true);
+                    else if (type === 'float') parsedVal = value.getFloat32(0, true);
+                    callback(parsedVal);
+                });
+            } catch (e) {
+                console.warn("Caractéristique manquante ou erreur:", uuid, e);
+            }
         }
-    });
 
-    // --- CONNEXION ---
-    async function connectDevice(side) {
-        const nameFilter = (side === 'L') ? 'NiclaL' : 'NiclaR';
-        const btn = document.getElementById('btn' + side);
-
-        try {
-            const device = await navigator.bluetooth.requestDevice({
-                filters: [{ name: nameFilter }],
-                optionalServices: [SERVICE_UUID]
-            });
-            btn.innerText = "...";
-            const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(SERVICE_UUID);
-
-            setupChar(service, CHAR_PAS_SESSION_UUID, (v) => document.getElementById('steps' + side).innerText = v.getUint32(0, true));
-            setupChar(service, CHAR_VITESSE_UUID, (v) => document.getElementById('speed' + side).innerText = v.getFloat32(0, true).toFixed(1));
-            
-            // Pas de conversion (Valeur brute)
-            setupChar(service, CHAR_ACCEL_UUID, (v) => {
-                let valMps2 = v.getFloat32(0, true); 
-                document.getElementById('accel' + side).innerText = valMps2.toFixed(1);
-                updateChart(side, valMps2);
-            });
-
-            setupChar(service, CHAR_BATTERY_UUID, (v) => updateBatteryUI(side, v.getFloat32(0, true)));
-            setupChar(service, CHAR_ETAT_UUID, (v) => updateStateUI(side, v.getUint32(0, true)));
-
-            const ctrl = await service.getCharacteristic(CHAR_CONTROL_UUID);
-            if(side === 'L') charControlL = ctrl; else charControlR = ctrl;
-
-            btn.innerText = "CONNECTÉ";
-            btn.classList.add("connected");
-
-        } catch (error) {
-            console.error(error);
-            alert("Erreur: " + error);
-            btn.innerText = "ECHEC";
+        function updateText(id, val) {
+            document.getElementById(id).innerText = val;
         }
-    }
 
-    async function setupChar(service, uuid, callback) {
-        const char = await service.getCharacteristic(uuid);
-        await char.startNotifications();
-        char.addEventListener('characteristicvaluechanged', (e) => callback(e.target.value));
-    }
-
-    async function sendCommand(cmdCode) {
-        const val = Uint8Array.of(cmdCode);
-        if (charControlL) await charControlL.writeValue(val);
-        if (charControlR) await charControlR.writeValue(val);
-        
-        if(cmdCode === 1) { // Reset visuel
-             document.getElementById('stepsL').innerText = "0"; 
-             document.getElementById('stepsR').innerText = "0";
-             updateStateUI('L', 0); updateStateUI('R', 0);
+        function updateChart(datasetIndex, val) {
+            const chartData = accelChart.data.datasets[datasetIndex].data;
+            chartData.shift(); // Enlever le vieux point
+            chartData.push(val); // Ajouter le nouveau
+            accelChart.update(); // Redessiner
         }
-    }
 
-    function updateChart(side, value) {
-        const idx = (side === 'L') ? 0 : 1;
-        const data = dualChart.data.datasets[idx].data;
-        data.shift(); data.push(value);
-        dualChart.update();
-    }
+        function onDisconnected() {
+            document.getElementById('connectionStatus').innerText = "Déconnecté";
+            document.getElementById('connectionStatus').classList.remove('connected');
+            document.getElementById('connectBtn').style.display = 'block';
+            alert("Liaison perdue avec la chaussure.");
+        }
 
-    function updateBatteryUI(side, voltage) {
-        let pct = (voltage - 3.5) / (4.2 - 3.5) * 100;
-        if (pct > 100) pct = 100; if (pct < 0) pct = 0;
-        
-        const bar = document.getElementById('batLevel' + side);
-        const txt = document.getElementById('batText' + side);
-        
-        // Texte ET Barre
-        txt.innerText = Math.round(pct) + "%";
-        bar.style.width = pct + "%";
-        
-        if (pct > 50) bar.style.backgroundColor = "#2ed573"; 
-        else if (pct > 20) bar.style.backgroundColor = "#ffa502";
-        else bar.style.backgroundColor = "#ff4757";
-    }
+        // --- COMMANDES ---
+        async function sendCommand(cmdID) {
+            if (!controlChar) return;
+            const val = new Uint8Array([cmdID]);
+            await controlChar.writeValue(val);
+        }
 
-    function updateStateUI(side, state) {
-        const el = document.getElementById('state' + side);
-        const box = document.getElementById('box' + side);
-        let color = "#666", text = "REPOS";
-        if(state === 1) { text = "MARCHE"; color = "#2ed573"; }
-        if(state === 2) { text = "COURSE"; color = "#ffa502"; }
-        if(state === 3) { text = "SPRINT"; color = "#ff4757"; }
-        
-        el.innerText = text; el.style.color = (state===0) ? "#aaa" : color;
-        box.style.border = (state===0) ? "none" : `1px solid ${color}`;
-    }
-</script>
+        function toggleSleep() {
+            isSleep = !isSleep;
+            sendCommand(isSleep ? 3 : 4); // 3=Veille, 4=Reveil
+            document.getElementById('stateVal').innerText = isSleep ? "VEILLE" : "REVEIL...";
+        }
+
+    </script>
 </body>
 </html>
