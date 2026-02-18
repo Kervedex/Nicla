@@ -3,78 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Sense - Master Dashboard V10</title>
+    <title>Nicla Sense - Master Dashboard V11</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- DESIGN CLASSIQUE (BASE V6) --- */
+        /* --- DESIGN GLOBAL --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding-bottom: 100px; } /* Marge pour la barre du bas */
+        .container { max-width: 1200px; margin: 0 auto; padding-bottom: 100px; }
         
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         h1 { margin: 0; font-size: 24px; color: #fff; }
 
-        /* Grille 2 colonnes */
+        /* Grille Principale */
         .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         
         .foot-column { background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 5px solid #444; }
         .left-col { border-top-color: #00d2ff; }
         .right-col { border-top-color: #ffa502; }
 
-        /* Boutons Connexion */
+        /* Boutons */
         .btn-connect { width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; text-transform: uppercase;}
         .btn-l { background-color: #00d2ff; color: #000; }
         .btn-r { background-color: #ffa502; color: #000; }
         .connected { background-color: #2ed573 !important; color: white !important; cursor: default; }
 
-        /* Status */
+        /* État */
         .status-box { background: #252525; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;}
         .status-label { color: #888; font-size: 12px; font-weight: bold; }
         .status-val { font-weight: bold; font-size: 16px; }
 
-        /* Cartes Métriques */
+        /* Métriques */
         .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card { background-color: #252525; padding: 15px; border-radius: 8px; text-align: center; }
         .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
         .value { font-size: 24px; font-weight: bold; }
         .unit { font-size: 11px; color: #666; }
 
-        /* --- NOUVEAU : Double Valeur Accélération --- */
+        /* Accélération Double */
         .dual-accel { display: flex; justify-content: center; gap: 10px; align-items: baseline; }
         .val-h { color: #00d2ff; }
         .val-v { color: #ff4757; }
         .sub-label { font-size: 10px; color: #555; }
 
-        /* --- BATTERIE (Barre + Texte) --- */
+        /* Batterie */
         .battery-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;}
-        .battery-shell {
-            width: 35px; height: 16px; border: 2px solid #777; border-radius: 4px; padding: 1px; position: relative;
-        }
-        .battery-shell::after {
-            content: ''; position: absolute; right: -5px; top: 4px; width: 3px; height: 8px; background: #777; border-radius: 0 2px 2px 0;
-        }
+        .battery-shell { width: 35px; height: 16px; border: 2px solid #777; border-radius: 4px; padding: 1px; position: relative; }
+        .battery-shell::after { content: ''; position: absolute; right: -5px; top: 4px; width: 3px; height: 8px; background: #777; border-radius: 0 2px 2px 0; }
         .battery-level { height: 100%; width: 0%; background-color: #444; border-radius: 2px; transition: width 0.5s; }
         .bat-text { font-size: 14px; font-weight: bold; color: #fff; }
 
-        /* --- GRAPHIQUE --- */
-        .chart-section { 
-            margin-top: 30px; 
-            background-color: #1e1e1e; 
-            padding: 15px; 
-            border-radius: 10px; 
-            height: 350px;
-        }
+        /* Graphique */
+        .chart-section { margin-top: 30px; background-color: #1e1e1e; padding: 15px; border-radius: 10px; height: 350px; }
 
-        /* --- CONTROL BAR (REMISE EN PLACE !) --- */
+        /* Barre de Contrôle */
         .control-bar {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background-color: #252525; border-top: 1px solid #444;
             padding: 15px 0; display: flex; justify-content: center; gap: 20px;
             box-shadow: 0 -5px 15px rgba(0,0,0,0.5); z-index: 999;
         }
-        .btn-action {
-            padding: 10px 25px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; transition: 0.2s;
-        }
+        .btn-action { padding: 10px 25px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; transition: 0.2s; }
         .btn-reset { background-color: #ff4757; color: white; }
         .btn-calib { background-color: #70a1ff; color: white; }
         .btn-sleep { background-color: #a4b0be; color: #2f3542; }
@@ -87,7 +74,7 @@
 
 <div class="container">
     <header>
-        <h1>👟 Nicla V10 (Control Edition)</h1>
+        <h1>👟 Nicla V11 (Sync Edition)</h1>
     </header>
 
     <div class="main-grid">
@@ -193,7 +180,7 @@
 </div>
 
 <script>
-    // UUIDs Arduino
+    // UUIDs Synchronisés avec le code Arduino fourni
     const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
     const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
     const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
@@ -213,7 +200,7 @@
             labels: Array(60).fill(''),
             datasets: [
                 {
-                    label: 'Propulsion GAUCHE (H)',
+                    label: 'Propulsion GAUCHE (Horiz)',
                     data: Array(60).fill(0),
                     borderColor: '#00d2ff',
                     borderWidth: 2,
@@ -221,7 +208,7 @@
                     pointRadius: 0
                 },
                 {
-                    label: 'Propulsion DROITE (H)',
+                    label: 'Propulsion DROITE (Horiz)',
                     data: Array(60).fill(0),
                     borderColor: '#ffa502',
                     borderWidth: 2,
@@ -256,15 +243,18 @@
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
 
-            // PAS
+            // PAS (Lecture UINT32)
             setupChar(service, CHAR_PAS_SESSION_UUID, 'int', (v) => document.getElementById('steps' + side).innerText = v);
             
-            // VITESSE (Conversion m/s -> km/h + FORCE ARRET)
+            // VITESSE (Float)
+            // Note: Ton code Arduino envoie déjà du km/h (multiplié par 3.6).
+            // On ne multiplie PAS ici pour éviter une double conversion.
             setupChar(service, CHAR_VITESSE_UUID, 'float', (v) => {
-                document.getElementById('speed' + side).innerText = (v * 3.6).toFixed(1);
+                document.getElementById('speed' + side).innerText = v.toFixed(1);
                 
-                // --- MODIFICATION ICI : Forcer l'état ARRÊT si vitesse ~0 ---
-                if (v < 0.1) {
+                // Si la vitesse est très faible (< 1 km/h), on force visuellement l'état "ARRÊT"
+                // Cela rend l'interface plus réactive que d'attendre le timeout Arduino de 2 sec.
+                if (v < 1.0) {
                     updateStateUI(side, 0); 
                 }
             });
@@ -283,7 +273,7 @@
             // BATTERIE
             setupChar(service, CHAR_BATTERY_UUID, 'float', (v) => updateBatteryUI(side, v));
             
-            // ETAT
+            // ETAT (Lecture UINT32/INT)
             setupChar(service, CHAR_ETAT_UUID, 'int', (v) => updateStateUI(side, v));
 
             // CONTROLE
@@ -306,6 +296,7 @@
             await char.startNotifications();
             char.addEventListener('characteristicvaluechanged', (e) => {
                 const val = e.target.value;
+                // 'int' lit un entier non signé 32 bits, 'float' lit un float 32 bits
                 let parsed = (type === 'int') ? val.getUint32(0, true) : val.getFloat32(0, true);
                 callback(parsed);
             });
@@ -350,13 +341,17 @@
         const el = document.getElementById('state' + side);
         const box = document.getElementById('box' + side);
         
-        // --- MODIFICATION ICI : Texte ARRÊT ---
+        // CORRESPONDANCE AVEC TON CODE ARDUINO :
+        // 0 = Arrêt (via timeout ou vitesse nulle)
+        // 1 = Marche (registerStep par défaut)
+        // 2 = Course (stepDuration < 500ms)
+        // 3 = Sprint (stepDuration < 350ms)
         const states = ["ARRÊT", "MARCHE", "COURSE", "SPRINT"];
         
         let color = "#666";
-        if(state === 1) color = "#2ed573"; // Marche
-        if(state === 2) color = "#ffa502"; // Course
-        if(state === 3) color = "#ff4757"; // Sprint
+        if(state === 1) color = "#2ed573"; // Marche (Vert)
+        if(state === 2) color = "#ffa502"; // Course (Orange)
+        if(state === 3) color = "#ff4757"; // Sprint (Rouge)
         
         el.innerText = states[state] || "INCONNU"; 
         
