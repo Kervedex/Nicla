@@ -3,58 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Sense - Master Dashboard V11</title>
+    <title>Nicla Sense - Dashboard V12 (Speed Zones)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- DESIGN GLOBAL --- */
+        /* --- DESIGN --- */
         body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; padding-bottom: 100px; }
         
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         h1 { margin: 0; font-size: 24px; color: #fff; }
 
-        /* Grille Principale */
         .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         
         .foot-column { background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 5px solid #444; }
         .left-col { border-top-color: #00d2ff; }
         .right-col { border-top-color: #ffa502; }
 
-        /* Boutons */
         .btn-connect { width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; text-transform: uppercase;}
         .btn-l { background-color: #00d2ff; color: #000; }
         .btn-r { background-color: #ffa502; color: #000; }
         .connected { background-color: #2ed573 !important; color: white !important; cursor: default; }
 
-        /* État */
         .status-box { background: #252525; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;}
         .status-label { color: #888; font-size: 12px; font-weight: bold; }
         .status-val { font-weight: bold; font-size: 16px; }
 
-        /* Métriques */
         .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card { background-color: #252525; padding: 15px; border-radius: 8px; text-align: center; }
         .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
         .value { font-size: 24px; font-weight: bold; }
         .unit { font-size: 11px; color: #666; }
 
-        /* Accélération Double */
         .dual-accel { display: flex; justify-content: center; gap: 10px; align-items: baseline; }
         .val-h { color: #00d2ff; }
         .val-v { color: #ff4757; }
         .sub-label { font-size: 10px; color: #555; }
 
-        /* Batterie */
         .battery-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;}
         .battery-shell { width: 35px; height: 16px; border: 2px solid #777; border-radius: 4px; padding: 1px; position: relative; }
         .battery-shell::after { content: ''; position: absolute; right: -5px; top: 4px; width: 3px; height: 8px; background: #777; border-radius: 0 2px 2px 0; }
         .battery-level { height: 100%; width: 0%; background-color: #444; border-radius: 2px; transition: width 0.5s; }
         .bat-text { font-size: 14px; font-weight: bold; color: #fff; }
 
-        /* Graphique */
         .chart-section { margin-top: 30px; background-color: #1e1e1e; padding: 15px; border-radius: 10px; height: 350px; }
 
-        /* Barre de Contrôle */
         .control-bar {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background-color: #252525; border-top: 1px solid #444;
@@ -67,26 +59,21 @@
         .btn-sleep { background-color: #a4b0be; color: #2f3542; }
         .btn-wake  { background-color: #2ed573; color: white; }
         .btn-action:hover { transform: scale(1.05); filter: brightness(1.1); }
-
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>👟 Nicla V11 (Sync Edition)</h1>
+        <h1>👟 Nicla V12 (Zones Vitesse)</h1>
     </header>
 
     <div class="main-grid">
-        
         <div class="foot-column left-col">
             <button id="btnL" class="btn-connect btn-l" onclick="connectDevice('L')">CONNECTER GAUCHE</button>
-            
             <div class="status-box" id="boxL">
-                <span class="status-label">ÉTAT:</span> 
-                <span id="stateL" class="status-val" style="color:#666">ARRÊT</span>
+                <span class="status-label">ÉTAT:</span> <span id="stateL" class="status-val" style="color:#666">ARRÊT</span>
             </div>
-
             <div class="metrics-grid">
                 <div class="card">
                     <h3>Pas</h3>
@@ -100,15 +87,9 @@
                 <div class="card">
                     <h3>Accélération (H | V)</h3>
                     <div class="dual-accel">
-                        <div style="text-align:center">
-                            <span class="value val-h" id="accelHorizL">0.0</span><br>
-                            <span class="sub-label">HORIZ</span>
-                        </div>
+                        <div style="text-align:center"><span class="value val-h" id="accelHorizL">0.0</span><br><span class="sub-label">HORIZ</span></div>
                         <span style="color:#444">|</span>
-                        <div style="text-align:center">
-                            <span class="value val-v" id="accelVertL">0.0</span><br>
-                            <span class="sub-label">VERT</span>
-                        </div>
+                        <div style="text-align:center"><span class="value val-v" id="accelVertL">0.0</span><br><span class="sub-label">VERT</span></div>
                     </div>
                     <div class="unit">m/s²</div>
                 </div>
@@ -124,12 +105,9 @@
 
         <div class="foot-column right-col">
             <button id="btnR" class="btn-connect btn-r" onclick="connectDevice('R')">CONNECTER DROITE</button>
-
             <div class="status-box" id="boxR">
-                <span class="status-label">ÉTAT:</span> 
-                <span id="stateR" class="status-val" style="color:#666">ARRÊT</span>
+                <span class="status-label">ÉTAT:</span> <span id="stateR" class="status-val" style="color:#666">ARRÊT</span>
             </div>
-
             <div class="metrics-grid">
                 <div class="card">
                     <h3>Pas</h3>
@@ -143,15 +121,9 @@
                 <div class="card">
                     <h3>Accélération (H | V)</h3>
                     <div class="dual-accel">
-                        <div style="text-align:center">
-                            <span class="value val-h" id="accelHorizR">0.0</span><br>
-                            <span class="sub-label">HORIZ</span>
-                        </div>
+                        <div style="text-align:center"><span class="value val-h" id="accelHorizR">0.0</span><br><span class="sub-label">HORIZ</span></div>
                         <span style="color:#444">|</span>
-                        <div style="text-align:center">
-                            <span class="value val-v" id="accelVertR">0.0</span><br>
-                            <span class="sub-label">VERT</span>
-                        </div>
+                        <div style="text-align:center"><span class="value val-v" id="accelVertR">0.0</span><br><span class="sub-label">VERT</span></div>
                     </div>
                     <div class="unit">m/s²</div>
                 </div>
@@ -164,7 +136,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <div class="chart-section">
@@ -180,21 +151,19 @@
 </div>
 
 <script>
-    // --- UUIDS ---
     const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
     const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
     const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
     const CHAR_BATTERY_UUID     = "19b10000-1004-537e-4f6c-d104768a1214";
     const CHAR_ACCEL_HORIZ_UUID = "19b10000-1005-537e-4f6c-d104768a1214"; 
-    const CHAR_ETAT_UUID        = "19b10000-1006-537e-4f6c-d104768a1214";
     const CHAR_ACCEL_VERT_UUID  = "19b10000-1007-537e-4f6c-d104768a1214"; 
     const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214"; 
+    // On ignore le CHAR_ETAT de l'Arduino pour le calcul, on le fait ici
 
     let charControlL = null, charControlR = null;
-
-    // Variables pour gérer la stabilisation
     let stateTimers = { L: null, R: null };
-    const STATE_DEBOUNCE_DELAY = 800; // Délai uniquement pour passer de Marche <-> Course
+    let currentSpeed = { L: 0, R: 0 }; // Stockage local de la vitesse
+    const STATE_DEBOUNCE_DELAY = 600; // Délai un peu plus court pour la réactivité
 
     // --- CONFIG GRAPHIQUE ---
     const ctx = document.getElementById('dualChart').getContext('2d');
@@ -203,32 +172,13 @@
         data: {
             labels: Array(60).fill(''),
             datasets: [
-                {
-                    label: 'Propulsion GAUCHE',
-                    data: Array(60).fill(0),
-                    borderColor: '#00d2ff',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Propulsion DROITE',
-                    data: Array(60).fill(0),
-                    borderColor: '#ffa502',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointRadius: 0
-                }
+                { label: 'Accélération GAUCHE', data: Array(60).fill(0), borderColor: '#00d2ff', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+                { label: 'Accélération DROITE', data: Array(60).fill(0), borderColor: '#ffa502', borderWidth: 2, tension: 0.3, pointRadius: 0 }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false, 
-            animation: false,
-            scales: {
-                y: { min: 0, max: 20, grid: { color: '#333' } },
-                x: { display: false }
-            },
+            responsive: true, maintainAspectRatio: false, animation: false,
+            scales: { y: { min: 0, max: 20, grid: { color: '#333' } }, x: { display: false } },
             plugins: { legend: { labels: { color: 'white' } } }
         }
     });
@@ -239,57 +189,58 @@
         const btn = document.getElementById('btn' + side);
 
         try {
-            const device = await navigator.bluetooth.requestDevice({
-                filters: [{ name: nameFilter }],
-                optionalServices: [SERVICE_UUID]
-            });
+            const device = await navigator.bluetooth.requestDevice({ filters: [{ name: nameFilter }], optionalServices: [SERVICE_UUID] });
             btn.innerText = "CONNEXION...";
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
 
-            // PAS
             setupChar(service, CHAR_PAS_SESSION_UUID, 'int', (v) => document.getElementById('steps' + side).innerText = v);
             
-            // VITESSE
+            // --- C'EST ICI QUE TOUT SE JOUE POUR L'ÉTAT (ZONES DE VITESSE) ---
             setupChar(service, CHAR_VITESSE_UUID, 'float', (v) => {
                 document.getElementById('speed' + side).innerText = v.toFixed(1);
-                
-                // PRIORITÉ ABSOLUE À L'ARRÊT VIA LA VITESSE
-                // Si la vitesse chute sous 1.0 km/h, on force l'arrêt immédiat
+                currentSpeed[side] = v; // Mise à jour de la mémoire locale
+
+                // --- NOUVELLE LOGIQUE D'ÉTAT ---
+                let newState = 0; // Par défaut Arrêt
+
                 if (v < 1.0) {
-                    forceStopImmediate(side); 
+                    newState = 0; // Arrêt
+                } else if (v >= 1.0 && v < 6.0) {
+                    newState = 1; // Marche
+                } else if (v >= 6.0 && v < 15.0) {
+                    newState = 2; // Course
+                } else if (v >= 15.0) {
+                    newState = 3; // Sprint
                 }
+                
+                // On passe par le gestionnaire d'état
+                handleStateChange(side, newState);
             });
             
-            // ACCEL HORIZONTALE
+            // --- DÉTECTION DE DÉPART (ACCÉLÉRATION) ---
             setupChar(service, CHAR_ACCEL_HORIZ_UUID, 'float', (v) => {
                 document.getElementById('accelHoriz' + side).innerText = v.toFixed(1);
                 updateChart(side, v);
+
+                // LOGIQUE "A MINIMA MARCHE" : 
+                // Si l'accélération est forte (> 2.0 m/s²) MAIS que la vitesse est encore basse (démarrage)
+                // On force visuellement l'état "MARCHE" pour être réactif tout de suite.
+                if (v > 2.0 && currentSpeed[side] < 2.0) {
+                     updateUI(side, 1); // Force Marche immédiat sans délai
+                }
             });
 
-            // ACCEL VERTICALE
-            setupChar(service, CHAR_ACCEL_VERT_UUID, 'float', (v) => {
-                document.getElementById('accelVert' + side).innerText = v.toFixed(1);
-            });
-
-            // BATTERIE
+            setupChar(service, CHAR_ACCEL_VERT_UUID, 'float', (v) => document.getElementById('accelVert' + side).innerText = v.toFixed(1));
             setupChar(service, CHAR_BATTERY_UUID, 'float', (v) => updateBatteryUI(side, v));
-            
-            // ETAT (Gestion intelligente)
-            setupChar(service, CHAR_ETAT_UUID, 'int', (v) => handleStateChange(side, v));
 
-            // CONTROLE
             const ctrl = await service.getCharacteristic(CHAR_CONTROL_UUID);
             if(side === 'L') charControlL = ctrl; else charControlR = ctrl;
 
             btn.innerText = "CONNECTÉ";
             btn.classList.add("connected");
 
-        } catch (error) {
-            console.error(error);
-            alert("Erreur: " + error);
-            btn.innerText = "ECHEC";
-        }
+        } catch (error) { console.error(error); btn.innerText = "ECHEC"; }
     }
 
     async function setupChar(service, uuid, type, callback) {
@@ -301,49 +252,31 @@
                 let parsed = (type === 'int') ? val.getUint32(0, true) : val.getFloat32(0, true);
                 callback(parsed);
             });
-        } catch(e) { console.warn("UUID introuvable: " + uuid); }
+        } catch(e) {}
     }
 
-    // --- LOGIQUE DE CHANGEMENT D'ÉTAT ---
-    
+    // --- LOGIQUE DE CHANGEMENT D'ÉTAT OPTIMISÉE ---
     function handleStateChange(side, newState) {
-        // Cas 1 : Demande d'ARRÊT (0) venant de l'Arduino
-        // -> On applique TOUT DE SUITE. Pas de délai.
+        // PRIORITÉ ARRÊT : Si vitesse < 1.0 (State 0), on coupe tout de suite
         if (newState === 0) {
-            forceStopImmediate(side);
+            if (stateTimers[side]) clearTimeout(stateTimers[side]);
+            updateUI(side, 0);
             return;
         }
 
-        // Cas 2 : Demande de MARCHE/COURSE/SPRINT (1, 2, 3)
-        // -> On applique le délai (Debounce) pour éviter que ça clignote
-        
-        // On annule un changement précédent s'il n'est pas encore validé
+        // Sinon, on temporise pour éviter le scintillement entre Marche/Course
         if (stateTimers[side]) clearTimeout(stateTimers[side]);
 
-        // On lance le minuteur
         stateTimers[side] = setTimeout(() => {
             updateUI(side, newState);
         }, STATE_DEBOUNCE_DELAY);
     }
 
-    // Fonction spéciale pour forcer l'arrêt immédiatement
-    function forceStopImmediate(side) {
-        // 1. On tue tout minuteur "Marche/Course" qui serait en attente
-        if (stateTimers[side]) {
-            clearTimeout(stateTimers[side]);
-            stateTimers[side] = null;
-        }
-        // 2. On met à jour l'interface direct
-        updateUI(side, 0);
-    }
-
-    // Mise à jour visuelle réelle
     function updateUI(side, state) {
         const el = document.getElementById('state' + side);
         const box = document.getElementById('box' + side);
         const states = ["ARRÊT", "MARCHE", "COURSE", "SPRINT"];
         
-        // Optimisation : si c'est déjà le bon état, on ne touche pas au DOM
         if (el.innerText === states[state]) return;
 
         let color = "#666";
@@ -352,13 +285,10 @@
         if(state === 3) color = "#ff4757"; 
         
         el.innerText = states[state] || "INCONNU"; 
-        
         if(state === 0) {
-            el.style.color = "#888";
-            box.style.border = "none";
+            el.style.color = "#888"; box.style.border = "none";
         } else {
-            el.style.color = color;
-            box.style.border = `1px solid ${color}`;
+            el.style.color = color; box.style.border = `1px solid ${color}`;
         }
     }
 
@@ -366,12 +296,10 @@
         const val = Uint8Array.of(cmdCode);
         if (charControlL) await charControlL.writeValue(val);
         if (charControlR) await charControlR.writeValue(val);
-        
-        if(cmdCode === 1) { // RESET
+        if(cmdCode === 1) { 
              document.getElementById('stepsL').innerText = "0"; 
              document.getElementById('stepsR').innerText = "0";
-             forceStopImmediate('L'); 
-             forceStopImmediate('R');
+             updateUI('L', 0); updateUI('R', 0);
         }
     }
 
@@ -385,15 +313,14 @@
     function updateBatteryUI(side, voltage) {
         let pct = (voltage - 3.3) / (4.2 - 3.3) * 100;
         if (pct > 100) pct = 100; if (pct < 0) pct = 0;
-        
         const bar = document.getElementById('batLevel' + side);
         const txt = document.getElementById('batText' + side);
-        
         txt.innerText = Math.round(pct) + "%";
         bar.style.width = pct + "%";
-        
         if (pct > 50) bar.style.backgroundColor = "#2ed573"; 
         else if (pct > 20) bar.style.backgroundColor = "#ffa502";
         else bar.style.backgroundColor = "#ff4757";
     }
 </script>
+</body>
+</html>
