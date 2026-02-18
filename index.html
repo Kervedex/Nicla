@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicla Sense - Dashboard V12 (Speed Zones)</title>
+    <title>Nicla Sense - Dashboard V13 (Stable)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- DESIGN --- */
@@ -14,7 +14,6 @@
         h1 { margin: 0; font-size: 24px; color: #fff; }
 
         .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        
         .foot-column { background: #1a1a1a; padding: 20px; border-radius: 15px; border-top: 5px solid #444; }
         .left-col { border-top-color: #00d2ff; }
         .right-col { border-top-color: #ffa502; }
@@ -26,7 +25,7 @@
 
         .status-box { background: #252525; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;}
         .status-label { color: #888; font-size: 12px; font-weight: bold; }
-        .status-val { font-weight: bold; font-size: 16px; }
+        .status-val { font-weight: bold; font-size: 16px; transition: color 0.3s; }
 
         .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card { background-color: #252525; padding: 15px; border-radius: 8px; text-align: center; }
@@ -65,7 +64,7 @@
 
 <div class="container">
     <header>
-        <h1>👟 Nicla V12 (Zones Vitesse)</h1>
+        <h1>👟 Nicla V13 (Stabilisée)</h1>
     </header>
 
     <div class="main-grid">
@@ -80,7 +79,7 @@
                     <div class="value" id="stepsL" style="color: #00d2ff;">0</div>
                 </div>
                 <div class="card">
-                    <h3>Vitesse</h3>
+                    <h3>Vitesse (Moy)</h3>
                     <div class="value" id="speedL">0.0</div>
                     <div class="unit">km/h</div>
                 </div>
@@ -114,7 +113,7 @@
                     <div class="value" id="stepsR" style="color: #ffa502;">0</div>
                 </div>
                 <div class="card">
-                    <h3>Vitesse</h3>
+                    <h3>Vitesse (Moy)</h3>
                     <div class="value" id="speedR">0.0</div>
                     <div class="unit">km/h</div>
                 </div>
@@ -158,12 +157,17 @@
     const CHAR_ACCEL_HORIZ_UUID = "19b10000-1005-537e-4f6c-d104768a1214"; 
     const CHAR_ACCEL_VERT_UUID  = "19b10000-1007-537e-4f6c-d104768a1214"; 
     const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214"; 
-    // On ignore le CHAR_ETAT de l'Arduino pour le calcul, on le fait ici
 
     let charControlL = null, charControlR = null;
-    let stateTimers = { L: null, R: null };
-    let currentSpeed = { L: 0, R: 0 }; // Stockage local de la vitesse
-    const STATE_DEBOUNCE_DELAY = 600; // Délai un peu plus court pour la réactivité
+
+    // --- VARIABLES DE STABILISATION ---
+    // Timers pour retarder l'arrêt uniquement
+    let stopTimers = { L: null, R: null };
+    const STOP_GRACE_PERIOD = 1500; // 1.5 secondes avant de confirmer l'arrêt
+
+    // Buffers pour lisser la vitesse (moyenne glissante sur 5 valeurs)
+    let speedHistory = { L: [], R: [] };
+    const HISTORY_SIZE = 5;
 
     // --- CONFIG GRAPHIQUE ---
     const ctx = document.getElementById('dualChart').getContext('2d');
@@ -194,40 +198,40 @@
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
 
+            // PAS
             setupChar(service, CHAR_PAS_SESSION_UUID, 'int', (v) => document.getElementById('steps' + side).innerText = v);
             
-            // --- C'EST ICI QUE TOUT SE JOUE POUR L'ÉTAT (ZONES DE VITESSE) ---
+            // --- VITESSE & GESTION D'ÉTAT ---
             setupChar(service, CHAR_VITESSE_UUID, 'float', (v) => {
-                document.getElementById('speed' + side).innerText = v.toFixed(1);
-                currentSpeed[side] = v; // Mise à jour de la mémoire locale
-
-                // --- NOUVELLE LOGIQUE D'ÉTAT ---
-                let newState = 0; // Par défaut Arrêt
-
-                if (v < 1.0) {
-                    newState = 0; // Arrêt
-                } else if (v >= 1.0 && v < 6.0) {
-                    newState = 1; // Marche
-                } else if (v >= 6.0 && v < 15.0) {
-                    newState = 2; // Course
-                } else if (v >= 15.0) {
-                    newState = 3; // Sprint
-                }
+                // 1. Lissage : Calcul de la moyenne des X dernières valeurs
+                updateSpeedHistory(side, v);
+                const avgSpeed = getAverageSpeed(side);
                 
-                // On passe par le gestionnaire d'état
-                handleStateChange(side, newState);
+                document.getElementById('speed' + side).innerText = avgSpeed.toFixed(1);
+
+                // 2. Détermination de l'état CIBLE
+                let targetState = 0; // Arrêt par défaut
+                
+                // Hystérésis : On considère qu'on bouge vraiment si > 0.8 km/h en moyenne
+                if (avgSpeed >= 0.8 && avgSpeed < 6.0) targetState = 1;      // Marche
+                else if (avgSpeed >= 6.0 && avgSpeed < 15.0) targetState = 2; // Course
+                else if (avgSpeed >= 15.0) targetState = 3;                   // Sprint
+
+                // 3. Application de l'état avec Anti-Clignotement
+                handleStateLogic(side, targetState, avgSpeed);
             });
             
-            // --- DÉTECTION DE DÉPART (ACCÉLÉRATION) ---
-            setupChar(service, CHAR_ACCEL_HORIZ_UUID, 'float', (v) => {
-                document.getElementById('accelHoriz' + side).innerText = v.toFixed(1);
-                updateChart(side, v);
+            // --- ACCÉLÉRATION (AIDE AU DÉMARRAGE) ---
+            setupChar(service, CHAR_ACCEL_HORIZ_UUID, 'float', (accel) => {
+                document.getElementById('accelHoriz' + side).innerText = accel.toFixed(1);
+                updateChart(side, accel);
 
-                // LOGIQUE "A MINIMA MARCHE" : 
-                // Si l'accélération est forte (> 2.0 m/s²) MAIS que la vitesse est encore basse (démarrage)
-                // On force visuellement l'état "MARCHE" pour être réactif tout de suite.
-                if (v > 2.0 && currentSpeed[side] < 2.0) {
-                     updateUI(side, 1); // Force Marche immédiat sans délai
+                // LOGIQUE DE DÉMARRAGE RAPIDE :
+                // Si on détecte une forte accélération (> 2.5) ALORS qu'on est à l'arrêt,
+                // On force immédiatement l'état MARCHE sans attendre que la moyenne de vitesse monte.
+                // Cela rend le démarrage ultra-réactif.
+                if (accel > 2.5 && isStopped(side)) {
+                     forceState(side, 1); // Force MARCHE
                 }
             });
 
@@ -255,21 +259,59 @@
         } catch(e) {}
     }
 
-    // --- LOGIQUE DE CHANGEMENT D'ÉTAT OPTIMISÉE ---
-    function handleStateChange(side, newState) {
-        // PRIORITÉ ARRÊT : Si vitesse < 1.0 (State 0), on coupe tout de suite
-        if (newState === 0) {
-            if (stateTimers[side]) clearTimeout(stateTimers[side]);
-            updateUI(side, 0);
-            return;
+    // --- FONCTIONS LOGIQUES ---
+
+    function updateSpeedHistory(side, newSpeed) {
+        speedHistory[side].push(newSpeed);
+        if (speedHistory[side].length > HISTORY_SIZE) {
+            speedHistory[side].shift(); // Retire la plus vieille
         }
+    }
 
-        // Sinon, on temporise pour éviter le scintillement entre Marche/Course
-        if (stateTimers[side]) clearTimeout(stateTimers[side]);
+    function getAverageSpeed(side) {
+        if (speedHistory[side].length === 0) return 0;
+        const sum = speedHistory[side].reduce((a, b) => a + b, 0);
+        return sum / speedHistory[side].length;
+    }
 
-        stateTimers[side] = setTimeout(() => {
-            updateUI(side, newState);
-        }, STATE_DEBOUNCE_DELAY);
+    function isStopped(side) {
+        const el = document.getElementById('state' + side);
+        return el.innerText === "ARRÊT";
+    }
+
+    function handleStateLogic(side, targetState, avgSpeed) {
+        // CAS A : On est en mouvement (Marche/Course/Sprint)
+        if (targetState > 0) {
+            // Si un arrêt était prévu (timer actif), on l'annule car on bouge encore/nouveau
+            if (stopTimers[side]) {
+                clearTimeout(stopTimers[side]);
+                stopTimers[side] = null;
+            }
+            // On met à jour l'interface immédiatement
+            updateUI(side, targetState);
+        }
+        
+        // CAS B : La vitesse indique un arrêt (targetState == 0)
+        else {
+            // On ne passe pas à 0 tout de suite !
+            // Si on n'a pas déjà lancé un minuteur d'arrêt, on le lance.
+            if (!stopTimers[side]) {
+                stopTimers[side] = setTimeout(() => {
+                    // Si après le délai (1.5s), on est toujours censé être à l'arrêt, on valide.
+                    updateUI(side, 0);
+                    stopTimers[side] = null;
+                }, STOP_GRACE_PERIOD);
+            }
+        }
+    }
+
+    function forceState(side, state) {
+        // Annule tout timer d'arrêt
+        if (stopTimers[side]) {
+            clearTimeout(stopTimers[side]);
+            stopTimers[side] = null;
+        }
+        updateUI(side, state);
     }
 
     function updateUI(side, state) {
@@ -277,6 +319,7 @@
         const box = document.getElementById('box' + side);
         const states = ["ARRÊT", "MARCHE", "COURSE", "SPRINT"];
         
+        // Petite optimisation DOM
         if (el.innerText === states[state]) return;
 
         let color = "#666";
@@ -292,6 +335,7 @@
         }
     }
 
+    // --- RESTE DU CODE (COMMANDES, GRAPHIQUE...) ---
     async function sendCommand(cmdCode) {
         const val = Uint8Array.of(cmdCode);
         if (charControlL) await charControlL.writeValue(val);
@@ -299,7 +343,8 @@
         if(cmdCode === 1) { 
              document.getElementById('stepsL').innerText = "0"; 
              document.getElementById('stepsR').innerText = "0";
-             updateUI('L', 0); updateUI('R', 0);
+             forceState('L', 0); forceState('R', 0);
+             speedHistory['L'] = []; speedHistory['R'] = [];
         }
     }
 
