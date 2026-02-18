@@ -180,7 +180,7 @@
 </div>
 
 <script>
-    // UUIDs
+    // --- UUIDS ---
     const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
     const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
     const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
@@ -192,12 +192,9 @@
 
     let charControlL = null, charControlR = null;
 
-    // --- VARIABLES DE STABILISATION (NOUVEAU) ---
-    // On stocke les timers pour chaque côté afin de pouvoir les annuler
+    // Variables pour gérer la stabilisation
     let stateTimers = { L: null, R: null };
-    // Délai avant de valider un changement d'état (en ms)
-    // 800ms est un bon compromis entre réactivité et stabilité
-    const STATE_DEBOUNCE_DELAY = 800; 
+    const STATE_DEBOUNCE_DELAY = 800; // Délai uniquement pour passer de Marche <-> Course
 
     // --- CONFIG GRAPHIQUE ---
     const ctx = document.getElementById('dualChart').getContext('2d');
@@ -207,7 +204,7 @@
             labels: Array(60).fill(''),
             datasets: [
                 {
-                    label: 'Propulsion GAUCHE (Horiz)',
+                    label: 'Propulsion GAUCHE',
                     data: Array(60).fill(0),
                     borderColor: '#00d2ff',
                     borderWidth: 2,
@@ -215,7 +212,7 @@
                     pointRadius: 0
                 },
                 {
-                    label: 'Propulsion DROITE (Horiz)',
+                    label: 'Propulsion DROITE',
                     data: Array(60).fill(0),
                     borderColor: '#ffa502',
                     borderWidth: 2,
@@ -257,9 +254,10 @@
             setupChar(service, CHAR_VITESSE_UUID, 'float', (v) => {
                 document.getElementById('speed' + side).innerText = v.toFixed(1);
                 
-                // Si vitesse très faible, on demande l'état ARRÊT via le tampon
+                // PRIORITÉ ABSOLUE À L'ARRÊT VIA LA VITESSE
+                // Si la vitesse chute sous 1.0 km/h, on force l'arrêt immédiat
                 if (v < 1.0) {
-                    bufferStateUpdate(side, 0); 
+                    forceStopImmediate(side); 
                 }
             });
             
@@ -277,8 +275,8 @@
             // BATTERIE
             setupChar(service, CHAR_BATTERY_UUID, 'float', (v) => updateBatteryUI(side, v));
             
-            // ETAT (Passe maintenant par le tampon bufferStateUpdate)
-            setupChar(service, CHAR_ETAT_UUID, 'int', (v) => bufferStateUpdate(side, v));
+            // ETAT (Gestion intelligente)
+            setupChar(service, CHAR_ETAT_UUID, 'int', (v) => handleStateChange(side, v));
 
             // CONTROLE
             const ctrl = await service.getCharacteristic(CHAR_CONTROL_UUID);
@@ -306,41 +304,46 @@
         } catch(e) { console.warn("UUID introuvable: " + uuid); }
     }
 
-    async function sendCommand(cmdCode) {
-        const val = Uint8Array.of(cmdCode);
-        if (charControlL) await charControlL.writeValue(val);
-        if (charControlR) await charControlR.writeValue(val);
+    // --- LOGIQUE DE CHANGEMENT D'ÉTAT ---
+    
+    function handleStateChange(side, newState) {
+        // Cas 1 : Demande d'ARRÊT (0) venant de l'Arduino
+        // -> On applique TOUT DE SUITE. Pas de délai.
+        if (newState === 0) {
+            forceStopImmediate(side);
+            return;
+        }
+
+        // Cas 2 : Demande de MARCHE/COURSE/SPRINT (1, 2, 3)
+        // -> On applique le délai (Debounce) pour éviter que ça clignote
         
-        if(cmdCode === 1) { // Reset visuel
-             document.getElementById('stepsL').innerText = "0"; 
-             document.getElementById('stepsR').innerText = "0";
-             // On force la mise à jour immédiate pour le reset
-             updateStateImmediate('L', 0); 
-             updateStateImmediate('R', 0);
-        }
-    }
+        // On annule un changement précédent s'il n'est pas encore validé
+        if (stateTimers[side]) clearTimeout(stateTimers[side]);
 
-    // --- FONCTION DE STABILISATION (NOUVEAU) ---
-    function bufferStateUpdate(side, newState) {
-        // 1. On annule toute mise à jour d'état qui était en attente pour ce côté
-        if (stateTimers[side]) {
-            clearTimeout(stateTimers[side]);
-        }
-
-        // 2. On crée un nouveau délai. 
-        // L'interface ne changera QUE si aucune autre nouvelle valeur n'arrive pendant 800ms
+        // On lance le minuteur
         stateTimers[side] = setTimeout(() => {
-            updateStateImmediate(side, newState);
+            updateUI(side, newState);
         }, STATE_DEBOUNCE_DELAY);
     }
 
-    // Fonction qui fait le changement visuel réel (appelée après le délai)
-    function updateStateImmediate(side, state) {
+    // Fonction spéciale pour forcer l'arrêt immédiatement
+    function forceStopImmediate(side) {
+        // 1. On tue tout minuteur "Marche/Course" qui serait en attente
+        if (stateTimers[side]) {
+            clearTimeout(stateTimers[side]);
+            stateTimers[side] = null;
+        }
+        // 2. On met à jour l'interface direct
+        updateUI(side, 0);
+    }
+
+    // Mise à jour visuelle réelle
+    function updateUI(side, state) {
         const el = document.getElementById('state' + side);
         const box = document.getElementById('box' + side);
         const states = ["ARRÊT", "MARCHE", "COURSE", "SPRINT"];
         
-        // Si l'élément affiche déjà le bon état, on ne fait rien (optimisation)
+        // Optimisation : si c'est déjà le bon état, on ne touche pas au DOM
         if (el.innerText === states[state]) return;
 
         let color = "#666";
@@ -356,6 +359,19 @@
         } else {
             el.style.color = color;
             box.style.border = `1px solid ${color}`;
+        }
+    }
+
+    async function sendCommand(cmdCode) {
+        const val = Uint8Array.of(cmdCode);
+        if (charControlL) await charControlL.writeValue(val);
+        if (charControlR) await charControlR.writeValue(val);
+        
+        if(cmdCode === 1) { // RESET
+             document.getElementById('stepsL').innerText = "0"; 
+             document.getElementById('stepsR').innerText = "0";
+             forceStopImmediate('L'); 
+             forceStopImmediate('R');
         }
     }
 
