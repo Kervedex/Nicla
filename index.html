@@ -97,7 +97,7 @@
             
             <div class="status-box" id="boxL">
                 <span class="status-label">ÉTAT:</span> 
-                <span id="stateL" class="status-val" style="color:#666">...</span>
+                <span id="stateL" class="status-val" style="color:#666">ARRÊT</span>
             </div>
 
             <div class="metrics-grid">
@@ -140,7 +140,7 @@
 
             <div class="status-box" id="boxR">
                 <span class="status-label">ÉTAT:</span> 
-                <span id="stateR" class="status-val" style="color:#666">...</span>
+                <span id="stateR" class="status-val" style="color:#666">ARRÊT</span>
             </div>
 
             <div class="metrics-grid">
@@ -193,15 +193,15 @@
 </div>
 
 <script>
-    // UUIDs Mis à jour selon ton dernier code Arduino
+    // UUIDs Arduino
     const SERVICE_UUID          = "19b10000-0000-537e-4f6c-d104768a1214";
     const CHAR_PAS_SESSION_UUID = "19b10000-1001-537e-4f6c-d104768a1214";
     const CHAR_VITESSE_UUID     = "19b10000-1003-537e-4f6c-d104768a1214";
     const CHAR_BATTERY_UUID     = "19b10000-1004-537e-4f6c-d104768a1214";
-    const CHAR_ACCEL_HORIZ_UUID = "19b10000-1005-537e-4f6c-d104768a1214"; // Horizontal
+    const CHAR_ACCEL_HORIZ_UUID = "19b10000-1005-537e-4f6c-d104768a1214"; 
     const CHAR_ETAT_UUID        = "19b10000-1006-537e-4f6c-d104768a1214";
-    const CHAR_ACCEL_VERT_UUID  = "19b10000-1007-537e-4f6c-d104768a1214"; // Vertical
-    const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214"; // Commandes
+    const CHAR_ACCEL_VERT_UUID  = "19b10000-1007-537e-4f6c-d104768a1214"; 
+    const CHAR_CONTROL_UUID     = "19b10000-5001-537e-4f6c-d104768a1214"; 
 
     let charControlL = null, charControlR = null;
 
@@ -244,7 +244,7 @@
 
     // --- CONNEXION ---
     async function connectDevice(side) {
-        const nameFilter = (side === 'L') ? 'NiclaL' : 'NiclaR'; // Nom défini dans Arduino
+        const nameFilter = (side === 'L') ? 'NiclaL' : 'NiclaR'; 
         const btn = document.getElementById('btn' + side);
 
         try {
@@ -259,9 +259,14 @@
             // PAS
             setupChar(service, CHAR_PAS_SESSION_UUID, 'int', (v) => document.getElementById('steps' + side).innerText = v);
             
-            // VITESSE (Conversion m/s -> km/h)
+            // VITESSE (Conversion m/s -> km/h + FORCE ARRET)
             setupChar(service, CHAR_VITESSE_UUID, 'float', (v) => {
                 document.getElementById('speed' + side).innerText = (v * 3.6).toFixed(1);
+                
+                // --- MODIFICATION ICI : Forcer l'état ARRÊT si vitesse ~0 ---
+                if (v < 0.1) {
+                    updateStateUI(side, 0); 
+                }
             });
             
             // ACCEL HORIZONTALE (Graph + Texte)
@@ -344,7 +349,9 @@
     function updateStateUI(side, state) {
         const el = document.getElementById('state' + side);
         const box = document.getElementById('box' + side);
-        const states = ["REPOS", "MARCHE", "COURSE", "SPRINT"];
+        
+        // --- MODIFICATION ICI : Texte ARRÊT ---
+        const states = ["ARRÊT", "MARCHE", "COURSE", "SPRINT"];
         
         let color = "#666";
         if(state === 1) color = "#2ed573"; // Marche
@@ -352,8 +359,15 @@
         if(state === 3) color = "#ff4757"; // Sprint
         
         el.innerText = states[state] || "INCONNU"; 
-        el.style.color = (state===0) ? "#aaa" : color;
-        box.style.border = (state===0) ? "none" : `1px solid ${color}`;
+        
+        // Gestion visuelle de l'état "Arrêt" (Grisé)
+        if(state === 0) {
+            el.style.color = "#888";
+            box.style.border = "none";
+        } else {
+            el.style.color = color;
+            box.style.border = `1px solid ${color}`;
+        }
     }
 </script>
 </body>
