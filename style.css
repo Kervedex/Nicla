@@ -1,0 +1,228 @@
+/* --- BASE & TYPOGRAPHIE --- */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background-color: #121212; 
+    color: #ffffff; 
+    margin: 0; 
+    padding: 20px; 
+}
+
+.container { 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    padding-bottom: 100px; 
+}
+
+header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px; 
+    border-bottom: 1px solid #333; 
+    padding-bottom: 10px; 
+}
+
+/* --- GRILLE PRINCIPALE --- */
+.main-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 350px 1fr; 
+    gap: 20px; 
+    align-items: start; 
+}
+
+.foot-column { 
+    background: #1a1a1a; 
+    padding: 20px; 
+    border-radius: 15px; 
+    border-top: 5px solid #444; 
+}
+
+.left-col { border-top-color: #00d2ff; }
+.right-col { border-top-color: #ffa502; }
+
+/* --- JUMEAU NUMÉRIQUE (SVG) --- */
+.character-section { 
+    background: #1a1a1a; 
+    padding: 15px; 
+    border-radius: 15px; 
+    border-top: 5px solid #ffffff; 
+}
+
+.screen { 
+    width: 100%; 
+    height: 320px; 
+    border-radius: 10px;
+    position: relative; 
+    overflow: hidden; 
+    background: #ffffff;
+}
+
+svg { width: 100%; height: 100%; overflow: visible; }
+
+/* Animation fluide des membres */
+path, circle { 
+    transition: d 0.18s cubic-bezier(0.4, 0, 0.2, 1), cx 0.18s, cy 0.18s; 
+}
+
+/* Effet de vent pour le Sprint */
+.wind { stroke: #add8e6; stroke-width: 3; stroke-linecap: round; opacity: 0; }
+.sprint-active .wind { animation: windFlow 0.3s linear infinite; opacity: 0.7; }
+
+@keyframes windFlow { 
+    from { transform: translateX(180px); } 
+    to { transform: translateX(-180px); } 
+}
+
+/* --- CARTES DE DONNÉES & BOUTONS --- */
+.btn-connect { 
+    width: 100%; 
+    padding: 12px; 
+    margin-bottom: 15px; 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    text-transform: uppercase;
+}
+
+.btn-l { background-color: #00d2ff; color: #000; }
+.btn-r { background-color: #ffa502; color: #000; }
+.connected { background-color: #2ed573 !important; color: white !important; cursor: default; }
+
+.status-box { 
+    background: #252525; 
+    padding: 10px; 
+    border-radius: 5px; 
+    text-align: center; 
+    margin-bottom: 20px; 
+}
+
+.metrics-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; 
+}
+
+.card { 
+    background-color: #252525; 
+    padding: 15px; 
+    border-radius: 8px; 
+    text-align: center; 
+}
+
+.card h3 { margin: 0 0 5px 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
+.value { font-size: 24px; font-weight: bold; }
+.unit { font-size: 11px; color: #666; }
+
+/* Style spécifique Accélération H/V */
+.dual-accel { display: flex; justify-content: center; gap: 10px; align-items: baseline; }
+.val-h { color: #00d2ff; }
+.val-v { color: #ff4757; }
+.sub-label { font-size: 10px; color: #555; }
+
+/* --- BATTERIE --- */
+.battery-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;}
+.battery-shell { 
+    width: 35px; 
+    height: 16px; 
+    border: 2px solid #777; 
+    border-radius: 4px; 
+    position: relative; 
+}
+.battery-shell::after { 
+    content: ''; 
+    position: absolute; 
+    right: -5px; top: 3px; 
+    width: 3px; height: 6px; 
+    background: #777; 
+}
+.battery-level { height: 100%; width: 0%; transition: width 0.5s, background-color 0.3s; }
+
+/* --- GRAPHIQUE & BARRE DE CONTRÔLE --- */
+.chart-section { 
+    margin-top: 30px; 
+    background-color: #1e1e1e; 
+    padding: 15px; 
+    border-radius: 10px; 
+    height: 350px; 
+}
+
+.control-bar { 
+    position: fixed; 
+    bottom: 0; left: 0; 
+    width: 100%; 
+    background-color: #252525; 
+    border-top: 1px solid #444; 
+    padding: 15px 0; 
+    display: flex; 
+    justify-content: center; 
+    gap: 20px; 
+    z-index: 999; 
+}
+
+.btn-action { 
+    padding: 10px 25px; 
+    border-radius: 30px; 
+    border: none; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+.btn-reset { background-color: #ff4757; color: white; }
+.btn-calib { background-color: #70a1ff; color: white; }
+.btn-sleep { background-color: #a4b0be; }
+.btn-wake { background-color: #2ed573; color: white; }
+
+
+/* --- HEADER LAYOUT --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #333;
+}
+
+.header-left { display: flex; align-items: center; gap: 30px; }
+.header-right { display: flex; gap: 15px; }
+
+/* --- MINI INPUTS PROFIL --- */
+.user-profile-mini {
+    display: flex;
+    gap: 15px;
+    background: #1a1a1a;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.input-mini { display: flex; align-items: center; gap: 8px; }
+.input-mini label { font-size: 10px; color: #666; font-weight: bold; }
+.input-mini span { font-size: 10px; color: #444; }
+
+.input-mini input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #444;
+    color: #70a1ff;
+    font-weight: bold;
+    width: 45px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.input-mini input:focus { border-bottom-color: #70a1ff; }
+
+/* --- BADGES STATS --- */
+.stat-badge {
+    padding: 8px 15px;
+    border-radius: 10px;
+    min-width: 90px;
+    text-align: right;
+}
+.stat-badge.blue { border-right: 4px solid #70a1ff; background: #1a252f; }
+.stat-badge.red { border-right: 4px solid #ff4757; background: #2f1a1a; }
+
+.stat-badge .label { font-size: 9px; color: #888; letter-spacing: 1px; }
+.stat-badge .val { font-size: 18px; font-weight: bold; }
