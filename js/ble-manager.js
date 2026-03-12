@@ -65,6 +65,23 @@ async function connectDevice(side) {
         
         btn.innerText = "CONNECTÉ"; 
         btn.classList.add("connected");
+
+        // --- NOUVEAU : Auto-Reset propre à la connexion ---
+        isResetting = true; // On active le verrou anti-faux-pas
+        
+        // On envoie l'ordre de reset à la puce
+        await ctrl.writeValue(Uint8Array.of(1)); 
+        
+        // On force les compteurs de ce pied à 0
+        document.getElementById('steps' + side).innerText = "0";
+        lastSteps[side] = 0;
+        
+        // On remet la distance et les calories à zéro
+        if (typeof resetSessionData === "function") resetSessionData();
+        
+        // On lève le verrou une demi-seconde plus tard
+        setTimeout(() => { isResetting = false; }, 500);
+
     } catch (e) { console.log(e); btn.innerText = "ECHEC"; }
 }
 
