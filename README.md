@@ -1,6 +1,6 @@
 # Nicla
-This project uses a Nicla Sense Me board and the following C++ code. You can use Arduino to upload the code to the Nicla Sense Me board.
-The step detection is still in development, but it's works, not perfectly but it's works.
+//This project uses a Nicla Sense Me board and the following C++ code. You can use Arduino to upload the code to the Nicla Sense Me board.
+//The step detection is still in development, but it's works, not perfectly but it's works.
 
 #include "Arduino.h"
 #include "Arduino_BHY2.h"
