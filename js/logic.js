@@ -65,21 +65,6 @@ function handleStateLogic(side, targetState) {
     }
 }
 
-function updateUI(side, state) {
-    const el = document.getElementById('state' + side);
-    const box = document.getElementById('box' + side);
-    const states = ["ARRÊT", "MOUVEMENT"];
-    const colors = ["#888", "#2ed573"];
-    if (el) {
-        el.innerText = states[state] || "MOUVEMENT";
-        el.style.color = colors[state] || "#2ed573";
-        box.style.borderColor = colors[state] || "#444";
-    }
-}
-
-// Ajoute cette ligne dans ta fonction de reset si tu en as une
-// js/logic.js (Modifie ou ajoute cette fonction)
-
 function resetSessionData() {
     totalDistanceMeters = 0;
     totalCalories = 0;
@@ -92,4 +77,11 @@ function resetSessionData() {
     if (kcalEl) kcalEl.innerText = "0.0 kcal";
     
     console.log("Données de session réinitialisées");
+}
+
+function evaluerModeDeplacement(vitesseKmh) {
+    if (vitesseKmh < 1.0) return 0;       // ARRÊT (ou piétinement)
+    if (vitesseKmh >= 1.0 && vitesseKmh < 7.0) return 1;  // MARCHE (jusqu'à 7 km/h)
+    if (vitesseKmh >= 7.0 && vitesseKmh < 15.0) return 2; // COURSE (de 7 à 15 km/h)
+    return 3;                             // SPRINT (15 km/h et plus)
 }
