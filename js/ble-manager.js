@@ -14,6 +14,7 @@ const NICLA_CONFIG = {
 
 let charControlL = null;
 let charControlR = null;
+let lastSteps = { L: 0, R: 0 };
 
 /**
  * Fonction principale de connexion
@@ -33,9 +34,17 @@ async function connectDevice(side) {
 
         // --- DÉTECTION DU PAS RÉEL ---
         setupChar(service, NICLA_CONFIG.CHARS.PAS, 'int', (v) => {
+            // Mise à jour de l'affichage du chiffre
             document.getElementById('steps' + side).innerText = v;
-            animateStep(side);   // Animation du personnage
-            updateDistance(); // <-- LE PERSONNAGE BOUGE ICI
+    
+            // LOGIQUE IMPARABLE : On n'anime QUE si le chiffre a augmenté
+            if (v > lastSteps[side]) {
+                animateStep(side);   
+                updateDistance();    
+            }
+    
+        // On met à jour la mémoire avec le nouveau chiffre (même si c'est 0)
+            lastSteps[side] = v;
         });
 
         // --- VITESSE ---
@@ -80,24 +89,31 @@ let isResetting = false; // Le verrou
 async function sendCommand(cmdCode) {
     const val = Uint8Array.of(cmdCode);
     
+    // 1. Envoi au Bluetooth (avec sécurité si un seul pied est connecté)
     try {
-        if (charControlL) await charControlL.writeValue(val);
-        if (charControlR) await charControlR.writeValue(val);
+        if (typeof charControlL !== 'undefined' && charControlL) await charControlL.writeValue(val);
+        if (typeof charControlR !== 'undefined' && charControlR) await charControlR.writeValue(val);
+    } catch(e) { console.log("Erreur BLE:", e); }
+    
+    // 2. Si c'est le bouton RESET (code 1)
+    if (cmdCode === 1) { 
+        // Reset visuel
+        const elL = document.getElementById('stepsL');
+        const elR = document.getElementById('stepsR');
+        if (elL) elL.innerText = "0"; 
+        if (elR) elR.innerText = "0";
         
-        if (cmdCode === 1) { 
-            isResetting = true; // On active le verrou
-            
-            // On remet les compteurs visuels à 0 immédiatement
-            document.getElementById('stepsL').innerText = "0"; 
-            document.getElementById('stepsR').innerText = "0";
-            
-            // On appelle la fonction de reset de logic.js
+        // Reset de la mémoire pour accepter les prochains pas
+        lastSteps.L = 0;
+        lastSteps.R = 0;
+        
+        // Appel de la fonction pour nettoyer Distance et Kcal
+        if (typeof resetSessionData === "function") {
             resetSessionData(); 
-            
-            // On lève le verrou après 500ms (le temps que la Nicla confirme le 0)
-            setTimeout(() => { isResetting = false; }, 500);
+        } else {
+            console.error("ATTENTION: resetSessionData introuvable !");
         }
-    } catch(e) { console.log("Erreur commande:", e); isResetting = false; }
+    }
 }
 
 // MISE À JOUR de la réception des PAS
@@ -112,4 +128,5 @@ setupChar(service, NICLA_CONFIG.CHARS.PAS, 'int', (v) => {
         animateStep(side);   
         updateDistance();    
     }
+
 });
