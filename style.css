@@ -226,3 +226,60 @@ header {
 
 .stat-badge .label { font-size: 9px; color: #888; letter-spacing: 1px; }
 .stat-badge .val { font-size: 18px; font-weight: bold; }
+
+/* ========================================= */
+/* --- RESPONSIVE DESIGN (Mobiles & Tablettes) --- */
+/* ========================================= */
+
+@media (max-width: 900px) {
+    /* 1. On empile le header (titre, profil, stats) */
+    header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .header-left, .header-right {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        gap: 10px;
+    }
+
+    /* 2. Grille principale : 1 seule colonne au lieu de 3 */
+    .main-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    /* Optionnel : On place l'animation (le jumeau numérique) tout en haut sur mobile */
+    .center-col {
+        order: -1; 
+        margin: 0 auto;
+        width: 100%;
+        max-width: 350px;
+    }
+
+    /* 3. Barre de contrôle : boutons en grille 2x2 pour être plus facilement cliquables */
+    .control-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        justify-content: center;
+        padding: 10px;
+    }
+    
+    .btn-action {
+        width: 100%;
+        margin: 0;
+        padding: 15px 10px; /* Des boutons un peu plus hauts pour les gros doigts */
+        font-size: 14px;
+    }
+
+    /* 4. Graphique : on réduit un peu sa hauteur pour qu'il tienne sur l'écran */
+    .chart-section {
+        height: 250px; 
+        padding: 10px;
+    }
+}
